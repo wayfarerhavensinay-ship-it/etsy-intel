@@ -1,0 +1,4190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Etsy Market Intelligence</title>
+
+<!-- PWA Meta Tags -->
+<meta name="application-name" content="Etsy Analyzer">
+<meta name="description" content="Анализ Etsy магазина: конкуренты, тренды, ключевые слова, прибыль">
+<meta name="theme-color" content="#0F0F13">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Etsy Analyzer">
+
+<!-- PWA Icons (inline SVG as data URI) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230F0F13'/><text y='72' x='50' text-anchor='middle' font-size='60'>📊</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230F0F13'/><text y='72' x='50' text-anchor='middle' font-size='60'>📊</text></svg>">
+
+<!-- PWA Manifest (inline) -->
+<link rel="manifest" href="data:application/manifest+json,{
+  %22name%22:%22Etsy%20Market%20Intelligence%22,
+  %22short_name%22:%22Etsy%20Analyzer%22,
+  %22description%22:%22%D0%90%D0%BD%D0%B0%D0%BB%D0%B8%D0%B7%20Etsy%20%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0%22,
+  %22start_url%22:%22.%22,
+  %22display%22:%22standalone%22,
+  %22background_color%22:%22%230F0F13%22,
+  %22theme_color%22:%22%230F0F13%22,
+  %22orientation%22:%22portrait-primary%22,
+  %22icons%22:[{%22src%22:%22data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230F0F13'/><text y='72' x='50' text-anchor='middle' font-size='60'>📊</text></svg>%22,%22sizes%22:%22any%22,%22type%22:%22image/svg+xml%22}]
+}">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0F0F13;
+  --surface: #1A1A22;
+  --card:    #22222E;
+  --border:  #2E2E3E;
+  --accent:  #F4622A;
+  --accent2: #FFB347;
+  --green:   #3DD68C;
+  --blue:    #5B9CF6;
+  --purple:  #A78BFA;
+  --red:     #F87171;
+  --text:    #F0EEF8;
+  --muted:   #8884A0;
+  --dim:     #3A3A50;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky; top: 0; z-index: 100;
+}
+.logo {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+}
+header h1 { font-size: 16px; font-weight: 700; letter-spacing: -.3px; }
+header .sub { font-size: 12px; color: var(--muted); }
+.header-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+
+/* ── TABS ── */
+.tab-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex; gap: 4px;
+}
+.tab {
+  padding: 11px 16px;
+  font-size: 13px; font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── LAYOUT ── */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+/* ── SETUP ── */
+.setup-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 24px;
+}
+.setup-box h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 18px; }
+
+.fields { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+@media(max-width:700px){ .fields { grid-template-columns: 1fr; } }
+
+label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+input[type=text], input[type=password], input[type=number] {
+  width: 100%;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  padding: 10px 13px;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s;
+}
+input:focus { border-color: var(--accent); }
+input::placeholder { color: var(--dim); }
+
+.kw-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+@media(max-width:700px){ .kw-row { grid-template-columns: 1fr; } }
+
+.hint-box {
+  background: rgba(244,98,42,.08);
+  border: 1px solid rgba(244,98,42,.2);
+  border-radius: 10px;
+  padding: 12px 15px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.hint-box a { color: var(--accent); }
+.hint-box strong { color: var(--text); }
+
+.btn {
+  padding: 11px 20px;
+  border-radius: 9px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none;
+  transition: opacity .15s, transform .1s;
+}
+.btn:active { transform: scale(.98); }
+.btn-primary { background: var(--accent); color: #fff; width: 100%; padding: 13px; font-size: 14px; }
+.btn-primary:hover { opacity: .9; }
+.btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ── PROGRESS ── */
+#prog {
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
+}
+.prog-head { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px; font-weight: 600; }
+.prog-track { background: var(--dim); border-radius: 99px; height: 6px; overflow: hidden; margin-bottom: 14px; }
+.prog-fill  { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 99px; transition: width .4s; }
+.prog-log   { font-size: 12px; color: var(--muted); line-height: 2; max-height: 120px; overflow: hidden; }
+.plog { display: flex; gap: 8px; }
+.plog::before { content: "▸"; color: var(--accent); }
+
+/* ── METRIC CARDS ── */
+.metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 22px; }
+@media(max-width:800px){ .metrics { grid-template-columns: repeat(3,1fr); } }
+@media(max-width:500px){ .metrics { grid-template-columns: 1fr 1fr; } }
+
+.metric {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+}
+.metric .val { font-size: 26px; font-weight: 800; line-height: 1; margin-bottom: 5px; }
+.metric .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.metric .delta { font-size: 11px; margin-top: 4px; }
+
+/* ── SECTION ── */
+.section { margin-bottom: 28px; }
+.section-hd {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px;
+}
+.section-hd h3 { font-size: 14px; font-weight: 700; }
+.section-hd .cnt { background: var(--dim); color: var(--muted); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
+
+/* ── CARD ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+}
+.card-grid { display: grid; gap: 12px; }
+.card-grid-2 { grid-template-columns: 1fr 1fr; }
+.card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+@media(max-width:700px){ .card-grid-2,.card-grid-3 { grid-template-columns: 1fr; } }
+
+/* ── TABLE ── */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 8px 10px; color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+td { padding: 10px 10px; border-bottom: 1px solid var(--dim); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,.02); }
+
+/* ── BADGE ── */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+.b-green  { background: rgba(61,214,140,.15); color: var(--green); }
+.b-yellow { background: rgba(255,179,71,.15);  color: var(--accent2); }
+.b-red    { background: rgba(248,113,113,.15); color: var(--red); }
+.b-blue   { background: rgba(91,156,246,.15);  color: var(--blue); }
+.b-purple { background: rgba(167,139,250,.15); color: var(--purple); }
+.b-gray   { background: var(--dim); color: var(--muted); }
+
+/* ── TAGS ── */
+.tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+.tag { padding: 4px 11px; border-radius: 99px; font-size: 12px; font-weight: 500; cursor: default; }
+.tag-mine { background: rgba(91,156,246,.15); color: var(--blue); border: 1px solid rgba(91,156,246,.3); }
+.tag-new  { background: rgba(61,214,140,.12); color: var(--green); border: 1px dashed rgba(61,214,140,.4); }
+.tag-hot  { background: rgba(244,98,42,.12);  color: var(--accent); border: 1px solid rgba(244,98,42,.25); }
+
+/* ── SCORE RING ── */
+.score-row { display: flex; align-items: center; gap: 16px; }
+.ring { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+.ring svg { transform: rotate(-90deg); }
+.ring .num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; }
+
+/* ── BAR ── */
+.bar-row { margin-bottom: 10px; }
+.bar-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+.bar-track { background: var(--dim); border-radius: 99px; height: 7px; overflow: hidden; }
+.bar-fill  { height: 100%; border-radius: 99px; }
+
+/* ── LISTING ITEM ── */
+.listing-item {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 12px 0; border-bottom: 1px solid var(--dim);
+}
+.listing-item:last-child { border-bottom: none; padding-bottom: 0; }
+.listing-rank { width: 28px; height: 28px; border-radius: 50%; background: var(--dim); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.listing-rank.gold   { background: rgba(255,179,71,.2); color: var(--accent2); }
+.listing-rank.silver { background: rgba(200,200,220,.15); color: #C8C8DC; }
+.listing-rank.bronze { background: rgba(180,120,80,.2); color: #C87850; }
+.listing-body { flex: 1; min-width: 0; }
+.listing-title { font-size: 13px; font-weight: 600; line-height: 1.4; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.listing-meta  { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.listing-meta span { display: flex; align-items: center; gap: 4px; }
+.listing-price { font-size: 15px; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+
+/* ── TREND CARD ── */
+.trend-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.trend-card .tc-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; line-height: 1.3; }
+.trend-card .tc-stats { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.trend-card .tc-tags  { display: flex; flex-wrap: wrap; gap: 5px; }
+.trend-card .tc-tag   { background: var(--dim); color: var(--muted); font-size: 11px; padding: 2px 8px; border-radius: 99px; }
+.trend-card .tc-price { font-size: 16px; font-weight: 700; color: var(--green); }
+
+/* ── OPPORTUNITY CARD ── */
+.opp-card {
+  background: linear-gradient(135deg, rgba(61,214,140,.06), rgba(91,156,246,.04));
+  border: 1px solid rgba(61,214,140,.2);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 10px;
+}
+.opp-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--green); }
+.opp-body  { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+/* ── COMPETITOR PROFILE ── */
+.comp-profile {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.cp-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.cp-sub  { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.cp-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cp-stat  { background: var(--surface); border-radius: 8px; padding: 8px 10px; }
+.cp-stat .v { font-size: 15px; font-weight: 700; }
+.cp-stat .l { font-size: 11px; color: var(--muted); }
+
+/* ── PRICE HISTOGRAM ── */
+.price-hist { display: flex; align-items: flex-end; gap: 4px; height: 60px; margin: 10px 0; }
+.ph-bar { flex: 1; background: rgba(91,156,246,.3); border-radius: 3px 3px 0 0; position: relative; min-width: 8px; transition: background .2s; cursor: default; }
+.ph-bar:hover { background: var(--blue); }
+.ph-bar.my-range { background: rgba(244,98,42,.5); }
+.ph-bar:hover::after {
+  content: attr(data-tip);
+  position: absolute; bottom: 105%; left: 50%; transform: translateX(-50%);
+  background: var(--text); color: var(--bg); font-size: 11px; font-weight: 600;
+  padding: 3px 7px; border-radius: 5px; white-space: nowrap; pointer-events: none;
+}
+.hist-labels { display: flex; gap: 4px; font-size: 10px; color: var(--muted); }
+.hist-label  { flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── PANEL TABS ── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── ERROR ── */
+.error-box {
+  background: rgba(248,113,113,.1);
+  border: 1px solid rgba(248,113,113,.3);
+  border-radius: 12px;
+  padding: 18px 20px;
+  color: var(--red);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+.empty { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; }
+
+.conv-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.conv-track { flex: 1; height: 5px; background: var(--dim); border-radius: 99px; overflow: hidden; }
+.conv-fill-bar { height: 100%; border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">📊</div>
+  <div>
+    <h1>Etsy Market Intelligence</h1>
+    <div class="sub">Анализ магазина и рынка · 21 инструмент</div>
+  </div>
+  <div class="header-right">
+    <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer">
+      📲 Установить приложение
+    </button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- SETUP -->
+  <div class="setup-box">
+    <h2>Настройка</h2>
+    <div class="hint-box">
+      <strong>Как получить API ключ:</strong>
+      Зайди на <a href="https://www.etsy.com/developers/register" target="_blank">etsy.com/developers/register</a> →
+      нажми <strong>«Create a New App»</strong> → заполни любое название → Save → скопируй строку <strong>«Keystring»</strong>
+    </div>
+    <div class="fields">
+      <div>
+        <label>Etsy</label>
+        <button class="btn" type="button" onclick="connectEtsy()" style="width:100%;padding:11px 14px">🔐 Подключить Etsy</button>
+        <div id="etsy-status" style="font-size:11px;color:var(--muted);margin-top:7px">Не подключено</div>
+      </div>
+      <div>
+        <label>Название твоего магазина</label>
+        <input type="text" id="shopName" placeholder="Точное название на Etsy">
+      </div>
+      <div>
+        <label>Глубина анализа (листингов конкурентов)</label>
+        <input type="number" id="depth" value="100" min="25" max="200">
+      </div>
+    </div>
+    <div style="margin-bottom:8px">
+      <label>Ниши / ключевые слова для анализа рынка (до 4 штук)</label>
+    </div>
+    <div class="kw-row">
+      <input type="text" id="kw1" placeholder="bible study printable">
+      <input type="text" id="kw2" placeholder="christian journal pdf">
+      <input type="text" id="kw3" placeholder="prayer journal">
+      <input type="text" id="kw4" placeholder="scripture cards">
+    </div>
+    <div class="fields" style="margin-bottom:16px">
+      <div>
+        <label>Магазин конкурента для сравнения (необязательно)</label>
+        <input type="text" id="rivalShop" placeholder="Название магазина конкурента">
+      </div>
+      <div>
+        <label>AI</label>
+        <div style="font-size:12px;color:var(--muted);padding-top:10px">Anthropic API ключ хранится на сервере и не вводится в браузере.</div>
+      </div>
+      <div>
+        <label style="opacity:0">.</label>
+        <div style="font-size:11px;color:var(--muted);line-height:1.6;padding-top:6px">
+          AI ключ нужен только для таба 🤖 AI Описания.<br>
+          Получи на <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="runBtn" onclick="run()">🔍 Запустить полный анализ</button>
+  </div>
+
+  <!-- PROGRESS -->
+  <div id="prog">
+    <div class="prog-head">
+      <span id="prog-title">Анализирую...</span>
+      <span id="prog-pct" style="color:var(--accent)">0%</span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="prog-log" id="prog-log"></div>
+  </div>
+
+  <!-- TABS -->
+  <div id="tab-bar" class="tab-bar" style="display:none; border-radius:14px 14px 0 0; overflow:hidden; border:1px solid var(--border); border-bottom:none; background:var(--surface);">
+    <div class="tab active" onclick="showTab('overview')">📊 Обзор</div>
+    <div class="tab" onclick="showTab('competitors')">🏆 Конкуренты</div>
+    <div class="tab" onclick="showTab('trends')">🔥 Тренды</div>
+    <div class="tab" onclick="showTab('keywords')">🏷 Ключевые слова</div>
+    <div class="tab" onclick="showTab('myshop')">🛍 Мой магазин</div>
+    <div class="tab" onclick="showTab('gaps')">💡 Возможности</div>
+    <div class="tab" onclick="showTab('titles')">✍️ Заголовки</div>
+    <div class="tab" onclick="showTab('profit')">💰 Прибыль</div>
+    <div class="tab" onclick="showTab('monitor')">📈 Мониторинг</div>
+    <div class="tab" onclick="showTab('ai')">🤖 AI Описания</div>
+    <div class="tab" onclick="showTab('season')">📅 Сезонность</div>
+    <div class="tab" onclick="showTab('rival')">⚔️ Конкурент</div>
+    <div class="tab" onclick="showTab('launch')">🚀 Запуск</div>
+    <div class="tab" onclick="showTab('ab')">📊 A/B Тест</div>
+    <div class="tab" onclick="showTab('niches')">🎯 Ниши</div>
+    <div class="tab" onclick="showTab('bundle')">📦 Bundle</div>
+    <div class="tab" onclick="showTab('report')">🖨 PDF Отчёт</div>
+    <div class="tab" onclick="showTab('reviews')">💬 Отзывы</div>
+    <div class="tab" onclick="showTab('calendar')">📅 Календарь</div>
+    <div class="tab" onclick="showTab('journey')">🔍 Путь покупателя</div>
+    <div class="tab" onclick="showTab('income')">💰 Трекер дохода</div>
+  </div>
+  <div id="results" style="background:var(--surface); border:1px solid var(--border); border-top:none; border-radius:0 0 14px 14px; padding:24px; display:none;"></div>
+  <div id="err" style="display:none; margin-top:16px;"></div>
+
+</div>
+
+<script>
+// ────────────────────────────────────────
+//  STATE
+// ────────────────────────────────────────
+let S = {
+  apiKey: '', shop: null, myListings: [],
+  markets: {}, // kw → []
+  activeTab: 'overview'
+};
+
+// ────────────────────────────────────────
+//  API
+// ────────────────────────────────────────
+async function api(path, params={}) {
+  const u = new URL('/api/etsy' + path, window.location.origin);
+  Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));
+  const r = await fetch(u);
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`${r.status}: ${t.slice(0,300)}`);
+  }
+  return r.json();
+}
+
+async function connectEtsy() {
+  window.location.href = '/auth/etsy';
+}
+
+async function refreshEtsyStatus() {
+  try {
+    const r = await fetch('/api/session');
+    const d = await r.json();
+    const el = document.getElementById('etsy-status');
+    if (el) el.textContent = d.connected ? `Подключено: ${d.shopName || 'Etsy'}` : 'Не подключено';
+  } catch (_) {}
+}
+
+async function loadListings(shopId, depth) {
+  let all=[], offset=0;
+  while (all.length < depth) {
+    const limit = Math.min(100, depth - all.length);
+    const d = await api(`/shops/${shopId}/listings`, {
+      state:'active', limit, offset, includes:'Images,Tags'
+    });
+    if (!d.results?.length) break;
+    all = all.concat(d.results);
+    if (d.results.length < limit) break;
+    offset += d.results.length;
+  }
+  return all;
+}
+
+async function loadMarket(kw, limit=100) {
+  const d = await api('/listings/active', {
+    keywords:kw, limit, sort_on:'score', sort_order:'desc', includes:'Shop'
+  });
+  return d.results || [];
+}
+
+// ────────────────────────────────────────
+//  PROGRESS
+// ────────────────────────────────────────
+function pSet(pct, title, msg) {
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('prog-pct').textContent  = pct+'%';
+  document.getElementById('prog-title').textContent = title;
+  if (msg) {
+    const d = document.createElement('div');
+    d.className = 'plog'; d.textContent = msg;
+    const log = document.getElementById('prog-log');
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+}
+
+// ────────────────────────────────────────
+//  RUN
+// ────────────────────────────────────────
+async function run() {
+  S.apiKey = 'server';
+  S.rivalShop  = document.getElementById('rivalShop').value.trim();
+  const shop   = document.getElementById('shopName').value.trim();
+  const depth  = parseInt(document.getElementById('depth').value) || 100;
+  const kws    = [1,2,3,4].map(i=>document.getElementById('kw'+i).value.trim()).filter(Boolean);
+
+  if (!shop) { alert('Введи название магазина!'); return; }
+  const session = await fetch('/api/session').then(r=>r.json());
+  if (!session.connected) { alert('Сначала нажми «Подключить Etsy» и разреши доступ.'); return; }
+
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('prog').style.display = 'block';
+  document.getElementById('tab-bar').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('err').style.display = 'none';
+  document.getElementById('prog-log').innerHTML = '';
+  S.markets = {}; S.rivalData = null;
+
+  try {
+    pSet(5, 'Загружаю информацию о магазине...', 'Подключаюсь к Etsy API...');
+    const found = await api('/shops', {shop_name: shop, limit: 10});
+    if (!found.results?.length) throw new Error(`Магазин «${shop}» не найден в Etsy API`);
+    S.shop = found.results.find(x => (x.shop_name||'').toLowerCase() === shop.toLowerCase()) || found.results[0];
+    const shopId = S.shop.shop_id;
+    pSet(15, 'Магазин найден!', `«${S.shop.shop_name}» — ${S.shop.listing_active_count} листингов, ${S.shop.transaction_sold_count} продаж`);
+
+    pSet(20, 'Загружаю твои листинги...', 'Получаю все активные листинги магазина...');
+    S.myListings = await loadListings(shopId, depth);
+    pSet(35, `Загружено ${S.myListings.length} листингов`, 'Анализирую твои товары...');
+
+    const step = kws.length > 0 ? Math.floor(kws.length > 0 && S.rivalShop ? 45 : 55, kws.length) : 55;
+    let pct = 35;
+    for (let i = 0; i < kws.length; i++) {
+      pSet(pct, `Анализирую рынок: «${kws[i]}»...`, `Загружаю топ-${depth} листингов по запросу «${kws[i]}»`);
+      S.markets[kws[i]] = await loadMarket(kws[i], depth);
+      pct = Math.min(pct + Math.floor(50/Math.max(kws.length,1)), 85);
+      pSet(pct, `Рынок «${kws[i]}» — готово`, `Найдено ${S.markets[kws[i]].length} листингов`);
+    }
+
+    if (S.rivalShop) {
+      pSet(87, `Загружаю магазин конкурента «${S.rivalShop}»...`, `Анализирую конкурента...`);
+      try {
+        const rivalFound = await api('/shops', {shop_name: S.rivalShop, limit: 10});
+        if (!rivalFound.results?.length) throw new Error('Конкурент не найден');
+        const rivalInfo = rivalFound.results.find(x => (x.shop_name||'').toLowerCase() === S.rivalShop.toLowerCase()) || rivalFound.results[0];
+        const rivalListings = await loadListings(rivalInfo.shop_id, 100);
+        S.rivalData = { shop: rivalInfo, listings: rivalListings };
+        pSet(93, 'Конкурент загружен!', `«${S.rivalShop}» — ${rivalListings.length} листингов`);
+      } catch(e) { pSet(93, 'Конкурент не найден', `Не удалось загрузить «${S.rivalShop}»`); }
+    }
+
+    pSet(95, 'Формирую отчёт...', 'Вычисляю метрики и возможности...');
+    await delay(400);
+    pSet(100, 'Анализ завершён!', '');
+    await delay(500);
+
+    document.getElementById('prog').style.display = 'none';
+    renderAll();
+    document.getElementById('runBtn').disabled = false;
+
+  } catch(e) {
+    document.getElementById('prog').style.display = 'none';
+    document.getElementById('runBtn').disabled = false;
+    showError(e.message);
+  }
+}
+
+// ────────────────────────────────────────
+//  TABS
+// ────────────────────────────────────────
+function showTab(tab) {
+  S.activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const idx = ['overview','competitors','trends','keywords','myshop','gaps','titles','profit','monitor','ai','season','rival','launch','ab','niches','bundle','report','reviews','calendar','journey','income'].indexOf(tab);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+function renderAll() {
+  const res = document.getElementById('results');
+  res.innerHTML = `
+    <div id="panel-overview"   class="panel active"></div>
+    <div id="panel-competitors" class="panel"></div>
+    <div id="panel-trends"     class="panel"></div>
+    <div id="panel-keywords"   class="panel"></div>
+    <div id="panel-myshop"     class="panel"></div>
+    <div id="panel-gaps"       class="panel"></div>
+    <div id="panel-titles"     class="panel"></div>
+    <div id="panel-profit"     class="panel"></div>
+    <div id="panel-monitor"    class="panel"></div>
+    <div id="panel-ai"         class="panel"></div>
+    <div id="panel-season"     class="panel"></div>
+    <div id="panel-rival"      class="panel"></div>
+    <div id="panel-launch"     class="panel"></div>
+    <div id="panel-ab"         class="panel"></div>
+    <div id="panel-niches"     class="panel"></div>
+    <div id="panel-bundle"     class="panel"></div>
+    <div id="panel-report"     class="panel"></div>
+    <div id="panel-reviews"    class="panel"></div>
+    <div id="panel-calendar"   class="panel"></div>
+    <div id="panel-journey"    class="panel"></div>
+    <div id="panel-income"     class="panel"></div>
+  `;
+  document.getElementById('tab-bar').style.display = 'flex';
+  res.style.display = 'block';
+
+  renderOverview();
+  renderCompetitors();
+  renderTrends();
+  renderKeywords();
+  renderMyShop();
+  renderGaps();
+  renderTitles();
+  renderProfit();
+  renderMonitor();
+  renderAI();
+  renderSeason();
+  renderRival();
+  renderLaunch();
+  renderAB();
+  renderNiches();
+  renderBundle();
+  renderReport();
+  renderReviews();
+  renderCalendar();
+  renderJourney();
+  renderIncome();
+}
+
+// ────────────────────────────────────────
+//  OVERVIEW
+// ────────────────────────────────────────
+function renderOverview() {
+  const el = document.getElementById('panel-overview');
+  const sh = S.shop;
+  const ls = S.myListings;
+  const allMarket = Object.values(S.markets).flat();
+
+  const totalViews = ls.reduce((s,l)=>s+(l.views||0),0);
+  const totalFavs  = ls.reduce((s,l)=>s+(l.num_favorers||0),0);
+  const conv = totalViews > 0 ? (totalFavs/totalViews*100).toFixed(1) : '0';
+  const myAvgPrice = avgPrice(ls);
+  const mktAvgPrice = allMarket.length ? avgPrice(allMarket) : 0;
+
+  const seoScore = calcSeoScore(ls);
+  const scoreColor = seoScore >= 70 ? 'var(--green)' : seoScore >= 40 ? 'var(--accent2)' : 'var(--red)';
+
+  let html = `
+  <div class="metrics">
+    ${metric(sh.transaction_sold_count||0, 'Продаж всего', '')}
+    ${metric(ls.length, 'Листингов', '')}
+    ${metric(conv+'%', 'Конверсия', '')}
+    ${metric('$'+myAvgPrice.toFixed(2), 'Средняя цена', mktAvgPrice ? vsMarket(myAvgPrice, mktAvgPrice) : '')}
+    ${metric(sh.review_average?.toFixed(1)+'★' || '—', 'Рейтинг', `${sh.review_count||0} отзывов`)}
+  </div>
+
+  <div class="card-grid card-grid-2">
+    <div class="card">
+      <div class="section-hd"><h3>SEO-оценка магазина</h3></div>
+      <div class="score-row">
+        ${scoreRing(seoScore, scoreColor)}
+        <div style="flex:1">
+          <div style="font-size:13px;margin-bottom:10px;color:var(--muted)">${seoScoreLabel(seoScore)}</div>
+          ${seoBreakdown(ls)}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-hd"><h3>Положение на рынке</h3></div>
+      ${mktAvgPrice ? `
+        <div class="bar-row">
+          <div class="bar-label"><span>Твоя средняя цена</span><span style="color:var(--accent2)">$${myAvgPrice.toFixed(2)}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.min(myAvgPrice/mktAvgPrice/2*100,100)}%;background:var(--accent2)"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><span>Средняя цена рынка</span><span style="color:var(--blue)">$${mktAvgPrice.toFixed(2)}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:50%;background:var(--blue)"></div></div>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted)">
+          ${pricePositionText(myAvgPrice, mktAvgPrice)}
+        </div>
+      ` : '<div class="empty">Добавь ключевые слова для анализа рынка</div>'}
+    </div>
+  </div>
+  `;
+
+  // Быстрые проблемы
+  const problems = quickProblems(ls);
+  if (problems.length) {
+    html += `<div class="card" style="margin-top:12px">
+      <div class="section-hd"><h3>⚡ Быстрые исправления</h3><span class="cnt">${problems.length}</span></div>`;
+    for (const p of problems) {
+      html += `<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--dim)">
+        <span class="badge ${p.sev==='high'?'b-red':p.sev==='med'?'b-yellow':'b-blue'}">${p.sev==='high'?'Важно':p.sev==='med'?'Рекомендую':'Совет'}</span>
+        <span style="font-size:13px;line-height:1.5">${p.text}</span>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ────────────────────────────────────────
+//  COMPETITORS
+// ────────────────────────────────────────
+function renderCompetitors() {
+  const el = document.getElementById('panel-competitors');
+  const kws = Object.keys(S.markets);
+  if (!kws.length) { el.innerHTML = '<div class="empty">Добавь ключевые слова для анализа конкурентов</div>'; return; }
+
+  let html = '';
+
+  for (const kw of kws) {
+    const listings = S.markets[kw];
+    if (!listings.length) continue;
+
+    // Топ магазины
+    const shopMap = {};
+    for (const l of listings) {
+      const sn = l.shop?.shop_name || 'Unknown';
+      if (!shopMap[sn]) shopMap[sn] = { name: sn, count: 0, prices: [], favs: 0, views: 0 };
+      shopMap[sn].count++;
+      shopMap[sn].prices.push(priceOf(l));
+      shopMap[sn].favs += (l.num_favorers||0);
+      shopMap[sn].views += (l.views||0);
+    }
+    const topShops = Object.values(shopMap).sort((a,b)=>b.count-a.count).slice(0,6);
+
+    // Ценовая гистограмма
+    const prices = listings.map(priceOf).filter(p=>p>0).sort((a,b)=>a-b);
+    const myPrices = S.myListings.map(priceOf).filter(p=>p>0);
+    const myMin = myPrices.length ? Math.min(...myPrices) : 0;
+    const myMax = myPrices.length ? Math.max(...myPrices) : 0;
+
+    html += `
+    <div class="section">
+      <div class="section-hd"><h3>🔎 Ниша: «${kw}»</h3><span class="cnt">${listings.length} листингов</span></div>
+
+      <div class="card-grid card-grid-3" style="margin-bottom:12px">
+        ${miniMetric('$'+avgPrice(listings).toFixed(2), 'Средняя цена')}
+        ${miniMetric('$'+median(prices).toFixed(2), 'Медиана цен')}
+        ${miniMetric('$'+Math.min(...prices).toFixed(2)+' – $'+Math.max(...prices).toFixed(2), 'Диапазон')}
+      </div>
+
+      <div class="card-grid card-grid-2" style="margin-bottom:12px">
+        <div class="card">
+          <div class="section-hd"><h3>Распределение цен</h3></div>
+          ${priceHistogram(prices, myMin, myMax)}
+          <div style="margin-top:8px;font-size:12px;color:var(--muted)">
+            <span style="color:var(--accent)">■</span> Твой диапазон цен &nbsp;
+            <span style="color:var(--blue)">■</span> Рынок
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-hd"><h3>Топ-5 конкурентов</h3></div>
+          ${topShops.slice(0,5).map((s,i)=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--dim)">
+              <div>
+                <div style="font-size:13px;font-weight:600">${i+1}. ${s.name}</div>
+                <div style="font-size:11px;color:var(--muted)">ср. $${(s.prices.reduce((a,b)=>a+b,0)/s.prices.length).toFixed(2)} · ★ ${s.favs}</div>
+              </div>
+              <span class="badge b-gray">${s.count} в топе</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-hd"><h3>Топ-15 листингов конкурентов</h3></div>
+        ${listings.slice(0,15).map((l,i)=>listingItem(l,i+1)).join('')}
+      </div>
+    </div>
+    <hr class="divider">`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ────────────────────────────────────────
+//  TRENDS
+// ────────────────────────────────────────
+function renderTrends() {
+  const el = document.getElementById('panel-trends');
+  const allMarket = Object.values(S.markets).flat();
+  if (!allMarket.length) { el.innerHTML = '<div class="empty">Добавь ключевые слова</div>'; return; }
+
+  // Топ по избранному (сигнал желания купить)
+  const byFavs = [...allMarket].sort((a,b)=>(b.num_favorers||0)-(a.num_favorers||0)).slice(0,20);
+  // Топ по конверсии (favs/views)
+  const withViews = allMarket.filter(l=>(l.views||0)>50);
+  const byConv = [...withViews].sort((a,b)=>convOf(b)-convOf(a)).slice(0,15);
+  // Дорогие товары (высокая цена + в топе)
+  const expensive = [...allMarket].filter(l=>priceOf(l)>15).sort((a,b)=>priceOf(b)-priceOf(a)).slice(0,10);
+  // Ценовые кластеры
+  const clusters = priceClusters(allMarket);
+
+  let html = `
+  <div class="section">
+    <div class="section-hd"><h3>🔥 Самые желанные товары (по избранному)</h3></div>
+    <div class="card-grid card-grid-3">
+      ${byFavs.slice(0,6).map(l=>trendCard(l)).join('')}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>⚡ Самая высокая конверсия (просмотры→избранное)</h3></div>
+    <div class="card">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Название</th><th>Просмотры</th><th>★ Избр.</th><th>Конверсия</th><th>Цена</th></tr></thead>
+          <tbody>
+            ${byConv.slice(0,10).map((l,i)=>`<tr>
+              <td style="color:var(--muted)">${i+1}</td>
+              <td style="max-width:200px;font-weight:500">${clip(l.title,50)}</td>
+              <td>${(l.views||0).toLocaleString()}</td>
+              <td>${l.num_favorers||0}</td>
+              <td><span class="badge b-green">${convOf(l).toFixed(1)}%</span></td>
+              <td style="color:var(--accent2);font-weight:700">$${priceOf(l).toFixed(2)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-grid card-grid-2">
+    <div class="card">
+      <div class="section-hd"><h3>💰 Дорогие товары в топе</h3></div>
+      ${expensive.slice(0,6).map(l=>`
+        <div class="listing-item">
+          <div class="listing-body">
+            <div class="listing-title">${clip(l.title,55)}</div>
+            <div class="listing-meta">
+              <span>★ ${l.num_favorers||0}</span>
+              <span>👁 ${(l.views||0).toLocaleString()}</span>
+              <span>${l.shop?.shop_name||'—'}</span>
+            </div>
+          </div>
+          <div class="listing-price">$${priceOf(l).toFixed(2)}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="card">
+      <div class="section-hd"><h3>📦 Ценовые сегменты рынка</h3></div>
+      ${clusters.map(c=>`
+        <div class="bar-row">
+          <div class="bar-label">
+            <span>${c.label}</span>
+            <span style="color:var(--muted)">${c.count} товаров (${c.pct}%)</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${c.pct}%;background:${c.color}"></div>
+          </div>
+        </div>
+      `).join('')}
+      <div style="margin-top:12px;font-size:12px;color:var(--muted)">
+        Наибольшая конкуренция в сегменте с наибольшим числом товаров.
+        Самый прибыльный сегмент — тот, где мало товаров, но высокое избранное.
+      </div>
+    </div>
+  </div>
+  `;
+
+  el.innerHTML = html;
+}
+
+// ────────────────────────────────────────
+//  KEYWORDS
+// ────────────────────────────────────────
+function renderKeywords() {
+  const el = document.getElementById('panel-keywords');
+  const allMarket = Object.values(S.markets).flat();
+  const myTags = S.myListings.flatMap(l=>l.tags||[]).map(t=>t.toLowerCase());
+  const myTagSet = new Set(myTags);
+
+  if (!allMarket.length) { el.innerHTML = '<div class="empty">Добавь ключевые слова</div>'; return; }
+
+  // Теги конкурентов
+  const compTags = allMarket.flatMap(l=>l.tags||[]).map(t=>t.toLowerCase());
+  const compTagFreq = freqMap(compTags);
+  const topCompTags = Object.entries(compTagFreq).sort((a,b)=>b[1]-a[1]);
+
+  // Теги которых нет у меня
+  const missing = topCompTags.filter(([t])=>!myTagSet.has(t)).slice(0,40);
+  // Мои теги которые есть у конкурентов (пересечение)
+  const shared = topCompTags.filter(([t])=>myTagSet.has(t)).slice(0,30);
+  // Уникальные теги у меня (которых нет у конкурентов)
+  const uniqueMine = [...myTagSet].filter(t=>!compTagFreq[t]).slice(0,20);
+
+  // Слова из заголовков конкурентов
+  const titleWords = allMarket
+    .flatMap(l=>(l.title||'').toLowerCase().match(/\b[a-zA-Z]{3,}\b/g)||[])
+    .filter(w=>!['the','and','for','with','from','this','your','our','pdf','file'].includes(w));
+  const wordFreq = freqMap(titleWords);
+  const topWords = Object.entries(wordFreq).sort((a,b)=>b[1]-a[1]).slice(0,30);
+
+  let html = `
+  <div class="section">
+    <div class="section-hd"><h3>✅ Мои теги vs рынок</h3></div>
+    <div class="card-grid card-grid-3">
+      ${miniMetric(myTagSet.size, 'Уникальных тегов у меня')}
+      ${miniMetric(shared.length, 'Совпадают с рынком')}
+      ${miniMetric(missing.length, 'Потенциальных новых тегов')}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🆕 Теги конкурентов которых нет у тебя</h3><span class="cnt">${missing.length}</span></div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+        Чем чаще тег встречается у конкурентов в топе — тем важнее его добавить. Нажми на тег чтобы скопировать.
+      </div>
+      <div class="tags">
+        ${missing.map(([t,c])=>`
+          <span class="tag tag-new" onclick="copyText('${t}')" title="${c} конкурентов используют этот тег">
+            + ${t} <b style="opacity:.5">${c}</b>
+          </span>
+        `).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🔄 Теги которые есть и у тебя и у конкурентов</h3></div>
+    <div class="card">
+      <div class="tags">
+        ${shared.map(([t,c])=>`
+          <span class="tag tag-mine" title="${c} конкурентов">${t} <b style="opacity:.5">${c}</b></span>
+        `).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🌟 Мои уникальные теги (нет у конкурентов)</h3></div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+        Эти теги отличают тебя, но могут получать меньше трафика. Проверь нужны ли они.
+      </div>
+      <div class="tags">
+        ${uniqueMine.map(t=>`<span class="tag tag-hot">${t}</span>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>📝 Ключевые слова из заголовков конкурентов</h3></div>
+    <div class="card">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Слово</th><th>Встречается в заголовках</th><th>У меня в тегах?</th></tr></thead>
+          <tbody>
+            ${topWords.map(([w,c],i)=>`<tr>
+              <td style="color:var(--muted)">${i+1}</td>
+              <td style="font-weight:600">${w}</td>
+              <td>
+                <div class="conv-bar-wrap">
+                  <div class="conv-track"><div class="conv-fill-bar" style="width:${Math.min(c/topWords[0][1]*100,100)}%;background:var(--blue)"></div></div>
+                  <span style="color:var(--muted);font-size:12px">${c}</span>
+                </div>
+              </td>
+              <td>${myTagSet.has(w)?'<span class="badge b-green">✓ Есть</span>':'<span class="badge b-gray">Нет</span>'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  `;
+
+  el.innerHTML = html;
+}
+
+// ────────────────────────────────────────
+//  MY SHOP
+// ────────────────────────────────────────
+function renderMyShop() {
+  const el = document.getElementById('panel-myshop');
+  const ls = S.myListings;
+  if (!ls.length) { el.innerHTML = '<div class="empty">Нет листингов</div>'; return; }
+
+  const top10 = [...ls].sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,10);
+  const bottom10 = [...ls].sort((a,b)=>(a.views||0)-(b.views||0)).slice(0,10);
+  const seoIssues = ls.filter(l=>hasSeoIssues(l));
+
+  let html = `
+  <div class="section">
+    <div class="section-hd"><h3>🏆 Топ-10 по просмотрам</h3></div>
+    <div class="card">
+      ${top10.map((l,i)=>`
+        <div class="listing-item">
+          <div class="listing-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</div>
+          <div class="listing-body">
+            <div class="listing-title">${clip(l.title,60)}</div>
+            <div class="listing-meta">
+              <span>👁 ${(l.views||0).toLocaleString()}</span>
+              <span>★ ${l.num_favorers||0}</span>
+              <span>🏷 ${(l.tags||[]).length}/13 тегов</span>
+              <span>📷 ${(l.images||[]).length} фото</span>
+              ${convOf(l)>0?`<span class="badge b-${convOf(l)>=3?'green':convOf(l)>=1?'yellow':'red'}">${convOf(l).toFixed(1)}% конв.</span>`:''}
+            </div>
+          </div>
+          <div class="listing-price">$${priceOf(l).toFixed(2)}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>💤 Листинги с наименьшими просмотрами (нужно улучшить)</h3></div>
+    <div class="card">
+      ${bottom10.map((l,i)=>`
+        <div class="listing-item">
+          <div class="listing-body">
+            <div class="listing-title">${clip(l.title,60)}</div>
+            <div class="listing-meta">
+              <span style="color:var(--red)">👁 ${(l.views||0).toLocaleString()}</span>
+              <span>★ ${l.num_favorers||0}</span>
+              ${getSeoIssuesBadges(l)}
+            </div>
+          </div>
+          <div class="listing-price">$${priceOf(l).toFixed(2)}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>⚠️ SEO-проблемы листингов</h3><span class="cnt">${seoIssues.length}</span></div>
+    <div class="card">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Название</th><th>Теги</th><th>Фото</th><th>Заголовок</th><th>Описание</th></tr></thead>
+          <tbody>
+            ${seoIssues.slice(0,20).map(l=>`<tr>
+              <td style="max-width:180px;font-weight:500">${clip(l.title,40)}</td>
+              <td>${(l.tags||[]).length < 13 ? `<span class="badge b-red">${(l.tags||[]).length}/13</span>` : `<span class="badge b-green">13/13</span>`}</td>
+              <td>${(l.images||[]).length < 5 ? `<span class="badge b-yellow">${(l.images||[]).length}</span>` : `<span class="badge b-green">${(l.images||[]).length}</span>`}</td>
+              <td>${(l.title||'').length < 40 ? `<span class="badge b-yellow">${(l.title||'').length} симв.</span>` : `<span class="badge b-green">OK</span>`}</td>
+              <td>${(l.description||'').length < 200 ? `<span class="badge b-yellow">${(l.description||'').length} симв.</span>` : `<span class="badge b-green">OK</span>`}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  `;
+
+  el.innerHTML = html;
+}
+
+// ────────────────────────────────────────
+//  GAPS / OPPORTUNITIES
+// ────────────────────────────────────────
+function renderGaps() {
+  const el = document.getElementById('panel-gaps');
+  const allMarket = Object.values(S.markets).flat();
+  const myTags = new Set(S.myListings.flatMap(l=>l.tags||[]).map(t=>t.toLowerCase()));
+  const myPrices = S.myListings.map(priceOf).filter(p=>p>0);
+
+  const opps = [];
+
+  // 1. Ценовые возможности
+  const mktPrices = allMarket.map(priceOf).filter(p=>p>0);
+  const mktAvg = mktPrices.length ? mktPrices.reduce((a,b)=>a+b,0)/mktPrices.length : 0;
+  const myAvg  = myPrices.length  ? myPrices.reduce((a,b)=>a+b,0)/myPrices.length : 0;
+  if (mktAvg && myAvg < mktAvg * 0.8) {
+    opps.push({
+      icon: '💰',
+      title: `Ты продаёшь дешевле рынка на ${Math.round((1-myAvg/mktAvg)*100)}%`,
+      body: `Средняя цена рынка $${mktAvg.toFixed(2)}, у тебя $${myAvg.toFixed(2)}. Попробуй поднять цены на 10-15% на самых популярных листингах — это может увеличить выручку без потери продаж.`
+    });
+  }
+
+  // 2. Теговые пробелы
+  const compTags = allMarket.flatMap(l=>l.tags||[]).map(t=>t.toLowerCase());
+  const topMissingTags = Object.entries(freqMap(compTags))
+    .filter(([t])=>!myTags.has(t))
+    .sort((a,b)=>b[1]-a[1]).slice(0,5);
+  if (topMissingTags.length) {
+    opps.push({
+      icon: '🏷',
+      title: `${topMissingTags.length} высокочастотных тегов отсутствуют у тебя`,
+      body: `Самые важные теги которых нет: <strong>${topMissingTags.map(([t,c])=>`${t} (${c})`).join(', ')}</strong>. Добавь их к существующим листингам — это может увеличить органический трафик.`
+    });
+  }
+
+  // 3. Фото
+  const noPhoto = S.myListings.filter(l=>(l.images||[]).length < 5).length;
+  if (noPhoto > 0) {
+    opps.push({
+      icon: '📷',
+      title: `${noPhoto} листингов с менее чем 5 фотографиями`,
+      body: `Листинги с 7-10 фото получают на 30-40% больше просмотров. Добавь mockup фото, фото деталей, пример использования товара.`
+    });
+  }
+
+  // 4. Малое количество листингов
+  if (S.myListings.length < 30) {
+    opps.push({
+      icon: '📦',
+      title: 'Увеличь количество листингов до 30+',
+      body: `У тебя ${S.myListings.length} листингов. Магазины с 30+ листингами получают значительно больший органический охват. Можно добавить варианты существующих товаров, bundles, или дополнительные форматы.`
+    });
+  }
+
+  // 5. Высококонверсионные товары конкурентов без аналога
+  const highConvComp = allMarket.filter(l=>convOf(l)>5 && (l.views||0)>100).slice(0,3);
+  if (highConvComp.length) {
+    opps.push({
+      icon: '🎯',
+      title: 'Товары конкурентов с высокой конверсией — изучи и адаптируй',
+      body: `Топ конвертирующие товары конкурентов: ${highConvComp.map(l=>`«${clip(l.title,40)}» (${convOf(l).toFixed(1)}% конв.)`).join('; ')}. Изучи их теги, описания и фото.`
+    });
+  }
+
+  // 6. Дорогой сегмент
+  const expensive = allMarket.filter(l=>priceOf(l)>20);
+  const myExpensive = S.myListings.filter(l=>priceOf(l)>20);
+  if (expensive.length > 5 && myExpensive.length === 0) {
+    const avgExpFavs = expensive.reduce((s,l)=>s+(l.num_favorers||0),0)/expensive.length;
+    opps.push({
+      icon: '💎',
+      title: 'Премиум-сегмент ($20+) не занят в твоём магазине',
+      body: `На рынке ${expensive.length} листингов дороже $20, средний у них ${avgExpFavs.toFixed(0)} избранных. У тебя нет товаров в этом сегменте. Рассмотри создание bundle-пакетов или расширенных версий своих продуктов.`
+    });
+  }
+
+  // 7. Видео
+  opps.push({
+    icon: '🎬',
+    title: 'Добавь видео к листингам',
+    body: 'Листинги с видео получают приоритет в поиске Etsy. Достаточно 15-30 секундного ролика снятого на телефон — покажи процесс создания или использования товара.'
+  });
+
+  // 8. Star Seller
+  if (!S.shop?.is_star_seller) {
+    opps.push({
+      icon: '⭐',
+      title: 'Получи статус Star Seller',
+      body: 'Star Seller требует: отвечать на 95%+ сообщений в течение 24 часов, 95%+ положительных отзывов, 95%+ заказов отправлены вовремя. Этот значок увеличивает конверсию.'
+    });
+  }
+
+  let html = `
+  <div class="section">
+    <div class="section-hd"><h3>💡 Конкретные возможности для роста</h3><span class="cnt">${opps.length}</span></div>
+    <div class="rec-list">
+      ${opps.map((o,i)=>`
+        <div class="opp-card">
+          <div class="opp-title">${o.icon} ${o.title}</div>
+          <div class="opp-body">${o.body}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🗓 План действий (приоритеты)</h3></div>
+    <div class="card">
+      ${[
+        ['Сегодня', 'Добавь недостающие теги к топ-5 листингам по просмотрам', 'b-red'],
+        ['На этой неделе', 'Добавь фото (7-10 штук) к листингам с менее чем 5 фото', 'b-yellow'],
+        ['На этой неделе', 'Удлини заголовки листингов до 80-120 символов с ключевыми словами', 'b-yellow'],
+        ['В этом месяце', 'Добавь видео к 3-5 самым популярным листингам', 'b-blue'],
+        ['В этом месяце', 'Создай 2-3 новых листинга на основе топ-тегов конкурентов', 'b-blue'],
+        ['Постоянно', 'Публикуй 1-2 новых листинга в неделю для активности магазина', 'b-purple'],
+      ].map(([when, what, cls])=>`
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--dim);align-items:flex-start">
+          <span class="badge ${cls}" style="white-space:nowrap;flex-shrink:0">${when}</span>
+          <span style="font-size:13px;line-height:1.5">${what}</span>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+  `;
+
+  el.innerHTML = html;
+}
+
+// ────────────────────────────────────────
+//  HELPERS
+// ────────────────────────────────────────
+function priceOf(l) { return parseFloat(l.price?.amount||0)/100; }
+function convOf(l)  { const v=l.views||0; return v>0?(l.num_favorers||0)/v*100:0; }
+function clip(s,n)  { return s?.length>n ? s.substring(0,n)+'…' : s||''; }
+function delay(ms)  { return new Promise(r=>setTimeout(r,ms)); }
+
+function avgPrice(ls) {
+  const prices = ls.map(priceOf).filter(p=>p>0);
+  return prices.length ? prices.reduce((a,b)=>a+b,0)/prices.length : 0;
+}
+function median(arr) {
+  if (!arr.length) return 0;
+  const s = [...arr].sort((a,b)=>a-b);
+  return s[Math.floor(s.length/2)];
+}
+function freqMap(arr) {
+  return arr.reduce((acc,v)=>{acc[v]=(acc[v]||0)+1;return acc;},{});
+}
+
+function hasSeoIssues(l) {
+  return (l.tags||[]).length<13 || (l.images||[]).length<5 || (l.title||'').length<40 || (l.description||'').length<200;
+}
+
+function getSeoIssuesBadges(l) {
+  let b = '';
+  if ((l.tags||[]).length<13)  b += `<span class="badge b-red">мало тегов</span> `;
+  if ((l.images||[]).length<5) b += `<span class="badge b-yellow">мало фото</span> `;
+  if ((l.title||'').length<40) b += `<span class="badge b-yellow">короткий заголовок</span>`;
+  return b || '<span class="badge b-green">OK</span>';
+}
+
+function calcSeoScore(ls) {
+  if (!ls.length) return 0;
+  let total = 0;
+  for (const l of ls) {
+    let score = 0;
+    if ((l.tags||[]).length === 13)   score += 30;
+    else score += ((l.tags||[]).length/13)*30;
+    if ((l.images||[]).length >= 7)   score += 25;
+    else score += ((l.images||[]).length/7)*25;
+    if ((l.title||'').length >= 60)   score += 25;
+    else score += ((l.title||'').length/60)*25;
+    if ((l.description||'').length >= 300) score += 20;
+    else score += ((l.description||'').length/300)*20;
+    total += score;
+  }
+  return Math.round(total/ls.length);
+}
+
+function seoScoreLabel(s) {
+  if (s>=70) return 'Хорошая оптимизация';
+  if (s>=40) return 'Есть что улучшить';
+  return 'Нужна срочная оптимизация';
+}
+
+function seoBreakdown(ls) {
+  const avgTags  = ls.reduce((s,l)=>s+(l.tags||[]).length,0)/ls.length;
+  const avgImg   = ls.reduce((s,l)=>s+(l.images||[]).length,0)/ls.length;
+  const avgTitle = ls.reduce((s,l)=>s+(l.title||'').length,0)/ls.length;
+  return `
+    ${bar('Теги', avgTags/13*100, `${avgTags.toFixed(1)}/13`)}
+    ${bar('Фото', avgImg/10*100, `${avgImg.toFixed(1)}/10`)}
+    ${bar('Заголовок', avgTitle/140*100, `${avgTitle.toFixed(0)} симв.`)}
+  `;
+}
+
+function bar(label, pct, val) {
+  const c = pct>=80?'var(--green)':pct>=50?'var(--accent2)':'var(--red)';
+  return `<div class="bar-row">
+    <div class="bar-label"><span>${label}</span><span style="color:${c}">${val}</span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.min(pct,100)}%;background:${c}"></div></div>
+  </div>`;
+}
+
+function metric(val, lbl, sub) {
+  return `<div class="metric">
+    <div class="val">${val}</div>
+    <div class="lbl">${lbl}</div>
+    ${sub ? `<div class="delta" style="color:var(--muted)">${sub}</div>` : ''}
+  </div>`;
+}
+
+function miniMetric(val, lbl) {
+  return `<div class="card" style="padding:14px 16px">
+    <div style="font-size:20px;font-weight:800;margin-bottom:4px">${val}</div>
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${lbl}</div>
+  </div>`;
+}
+
+function scoreRing(score, color) {
+  const r = 28, circ = 2*Math.PI*r;
+  const dash = circ * score/100;
+  return `<div class="ring">
+    <svg width="72" height="72" viewBox="0 0 72 72">
+      <circle cx="36" cy="36" r="${r}" fill="none" stroke="var(--dim)" stroke-width="6"/>
+      <circle cx="36" cy="36" r="${r}" fill="none" stroke="${color}" stroke-width="6"
+        stroke-dasharray="${dash} ${circ}" stroke-linecap="round"/>
+    </svg>
+    <div class="num" style="color:${color}">${score}</div>
+  </div>`;
+}
+
+function vsMarket(myP, mktP) {
+  const d = ((myP-mktP)/mktP*100);
+  return d > 5  ? `<span style="color:var(--red)">↑${d.toFixed(0)}% рынка</span>` :
+         d < -5 ? `<span style="color:var(--accent2)">↓${Math.abs(d).toFixed(0)}% рынка</span>` :
+                  `<span style="color:var(--green)">≈ рынок</span>`;
+}
+
+function pricePositionText(myP, mktP) {
+  const d = myP/mktP;
+  if (d < 0.75) return '⚠️ Твои цены существенно ниже рынка. Возможно можно поднять.';
+  if (d < 0.9)  return '💡 Твои цены немного ниже рынка. Небольшое повышение безопасно.';
+  if (d < 1.1)  return '✅ Цены в рыночном диапазоне.';
+  if (d < 1.25) return '💡 Твои цены немного выше рынка. Убедись что качество оправдывает.';
+  return '⚠️ Твои цены существенно выше рынка. Убедись что ты предлагаешь явную ценность.';
+}
+
+function quickProblems(ls) {
+  const p = [];
+  const no13 = ls.filter(l=>(l.tags||[]).length<13).length;
+  if (no13)  p.push({ sev:'high', text:`${no13} листингов используют меньше 13 тегов. Добавь теги — это бесплатно и сразу улучшает SEO.` });
+  const noImg = ls.filter(l=>(l.images||[]).length<5).length;
+  if (noImg) p.push({ sev:'med',  text:`${noImg} листингов с менее чем 5 фото. Листинги с 7+ фото ранжируются лучше.` });
+  const noDesc = ls.filter(l=>(l.description||'').length<200).length;
+  if (noDesc) p.push({ sev:'med', text:`${noDesc} листингов с коротким описанием (менее 200 символов). Более детальное описание улучшает SEO и конверсию.` });
+  const dead = ls.filter(l=>(l.views||0)<5).length;
+  if (dead)  p.push({ sev:'med',  text:`${dead} листингов с менее чем 5 просмотрами. Обнови их теги и заголовки для получения буста.` });
+  return p;
+}
+
+function listingItem(l, rank) {
+  const cls = rank===1?'gold':rank===2?'silver':rank===3?'bronze':'';
+  return `<div class="listing-item">
+    <div class="listing-rank ${cls}">${rank}</div>
+    <div class="listing-body">
+      <div class="listing-title">${clip(l.title,55)}</div>
+      <div class="listing-meta">
+        <span>★ ${l.num_favorers||0} избр.</span>
+        <span>👁 ${(l.views||0).toLocaleString()}</span>
+        ${l.shop?.shop_name?`<span>🏪 ${l.shop.shop_name}</span>`:''}
+        ${convOf(l)>0?`<span class="badge b-${convOf(l)>=3?'green':'yellow'}">${convOf(l).toFixed(1)}%</span>`:''}
+      </div>
+    </div>
+    <div class="listing-price">$${priceOf(l).toFixed(2)}</div>
+  </div>`;
+}
+
+function trendCard(l) {
+  return `<div class="trend-card">
+    <div class="tc-title">${clip(l.title,60)}</div>
+    <div class="tc-stats">
+      <span>★ ${l.num_favorers||0}</span>
+      <span>👁 ${(l.views||0).toLocaleString()}</span>
+      ${l.shop?.shop_name?`<span>${l.shop.shop_name}</span>`:''}
+    </div>
+    <div class="tc-price">$${priceOf(l).toFixed(2)}</div>
+  </div>`;
+}
+
+function priceHistogram(prices, myMin, myMax) {
+  if (!prices.length) return '<div class="empty">Нет данных</div>';
+  const min = prices[0], max = prices[prices.length-1];
+  const BINS = 8;
+  const step = (max-min)/BINS || 1;
+  const bins = Array(BINS).fill(0);
+  prices.forEach(p => {
+    const i = Math.min(Math.floor((p-min)/step), BINS-1);
+    bins[i]++;
+  });
+  const maxBin = Math.max(...bins);
+  return `
+    <div class="price-hist">
+      ${bins.map((cnt,i)=>{
+        const lo = min+i*step, hi = lo+step;
+        const inRange = myMin<=hi && myMax>=lo;
+        const h = Math.round(cnt/maxBin*100);
+        return `<div class="ph-bar ${inRange?'my-range':''}" style="height:${Math.max(h,4)}%" data-tip="$${lo.toFixed(0)}-$${hi.toFixed(0)}: ${cnt}"></div>`;
+      }).join('')}
+    </div>
+    <div class="hist-labels">
+      ${bins.map((_,i)=>`<div class="hist-label">$${(min+i*step).toFixed(0)}</div>`).join('')}
+    </div>`;
+}
+
+function priceClusters(ls) {
+  const brackets = [
+    { label:'До $5',      min:0,  max:5,   color:'var(--blue)' },
+    { label:'$5–$10',     min:5,  max:10,  color:'var(--green)' },
+    { label:'$10–$20',    min:10, max:20,  color:'var(--accent2)' },
+    { label:'$20–$50',    min:20, max:50,  color:'var(--accent)' },
+    { label:'$50+',       min:50, max:9999,color:'var(--purple)' },
+  ];
+  const total = ls.filter(l=>priceOf(l)>0).length || 1;
+  return brackets.map(b=>{
+    const count = ls.filter(l=>{const p=priceOf(l); return p>=b.min&&p<b.max;}).length;
+    return {...b, count, pct: Math.round(count/total*100)};
+  });
+}
+
+function copyText(t) {
+  navigator.clipboard?.writeText(t);
+  const el = event.target;
+  const orig = el.textContent;
+  el.textContent = '✓ Скопировано';
+  setTimeout(()=>el.textContent=orig, 1200);
+}
+
+function showError(msg) {
+  const el = document.getElementById('err');
+  let hint = '';
+  if (msg.includes('401')||msg.includes('403')) hint = '<br><strong>Причина:</strong> Неверный API ключ. Проверь Keystring на etsy.com/developers';
+  else if (msg.includes('404')) hint = '<br><strong>Причина:</strong> Магазин не найден. Проверь точное название.';
+  else if (msg.includes('429')) hint = '<br><strong>Причина:</strong> Слишком много запросов. Подожди минуту.';
+  el.innerHTML = `<div class="error-box">❌ ${msg}${hint}</div>`;
+  el.style.display = 'block';
+}
+
+// ────────────────────────────────────────
+//  ✍️ АНАЛИЗ ЗАГОЛОВКОВ
+// ────────────────────────────────────────
+function renderTitles() {
+  const el = document.getElementById('panel-titles');
+  const allMarket = Object.values(S.markets).flat();
+  const myListings = S.myListings;
+
+  if (!allMarket.length) {
+    el.innerHTML = '<div class="empty">Добавь ключевые слова для анализа заголовков конкурентов</div>';
+    return;
+  }
+
+  // Анализ структуры заголовков топ-конкурентов
+  const topListings = [...allMarket].sort((a,b)=>(b.num_favorers||0)-(a.num_favorers||0)).slice(0,30);
+
+  // Паттерны: с чего начинают заголовки
+  const firstWords = topListings.map(l=>(l.title||'').split(/\s+/).slice(0,3).join(' ').toLowerCase());
+  const firstWordFreq = freqMap(firstWords.flatMap(s=>s.split(/\s+/).filter(w=>w.length>2)));
+  const topFirstWords = Object.entries(firstWordFreq).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+  // Длина заголовков у топ-листингов
+  const titleLens = topListings.map(l=>(l.title||'').length);
+  const avgLen = Math.round(titleLens.reduce((a,b)=>a+b,0)/titleLens.length);
+
+  // Популярные фразы (2-3 слова)
+  const bigrams = [];
+  for (const l of topListings) {
+    const words = (l.title||'').toLowerCase().replace(/[^a-zA-Z\s]/g,'').split(/\s+/).filter(w=>w.length>2);
+    for (let i=0;i<words.length-1;i++) bigrams.push(words[i]+' '+words[i+1]);
+  }
+  const bigramFreq = freqMap(bigrams);
+  const topBigrams = Object.entries(bigramFreq).sort((a,b)=>b[1]-a[1]).slice(0,20);
+
+  // Мои заголовки — оценка
+  const myTitleScores = myListings.slice(0,15).map(l=>{
+    const t = l.title||'';
+    let score = 0; const notes = [];
+    if (t.length>=60&&t.length<=140) { score+=30; } else if (t.length<40) { notes.push('Слишком короткий'); } else if (t.length>140) { notes.push('Слишком длинный'); }
+    const words = t.toLowerCase().split(/\s+/);
+    const hasKeyword = topBigrams.slice(0,10).some(([bg])=>t.toLowerCase().includes(bg));
+    if (hasKeyword) { score+=40; } else { notes.push('Нет популярных ключевых фраз'); }
+    if (t.includes('|')||t.includes('-')||t.includes(',')) { score+=15; } else { notes.push('Нет разделителей (|, -)'); }
+    if (words.length>=8) { score+=15; } else { notes.push('Мало слов'); }
+    return { title: t, score, notes, len: t.length };
+  });
+
+  // Генератор заголовка
+  const kws = Object.keys(S.markets);
+  const topKw = kws[0]||'';
+  const suggestedParts = [
+    topBigrams[0]?.[0]||topKw,
+    topBigrams[1]?.[0]||'printable pdf',
+    topBigrams[2]?.[0]||'instant download',
+  ];
+  const generatedTitle = suggestedParts.map(p=>p.split(' ').map(w=>w[0]?.toUpperCase()+w.slice(1)).join(' ')).join(' | ');
+
+  let html = `
+  <div class="section">
+    <div class="section-hd"><h3>📐 Структура идеального заголовка на Etsy</h3></div>
+    <div class="card-grid card-grid-3" style="margin-bottom:14px">
+      ${miniMetric(avgLen+' симв.', 'Средняя длина у топ-листингов')}
+      ${miniMetric('60–140', 'Рекомендуемый диапазон')}
+      ${miniMetric(topBigrams[0]?.[0]||'—', 'Самая популярная фраза')}
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:13px;line-height:1.8;color:var(--muted)">
+        <strong style="color:var(--text)">Формула топ-заголовка:</strong><br>
+        <span style="color:var(--accent2)">[Главное ключевое слово]</span> |
+        <span style="color:var(--blue)">[Тип продукта / формат]</span> |
+        <span style="color:var(--green)">[Для кого / Occasion]</span> |
+        <span style="color:var(--purple)">[Instant Download / Printable]</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🤖 Сгенерированный заголовок на основе топ-конкурентов</h3></div>
+    <div class="card" style="border-color:rgba(61,214,140,.3)">
+      <div style="font-size:15px;font-weight:700;color:var(--green);margin-bottom:10px;line-height:1.5" id="gen-title">${generatedTitle}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">${generatedTitle.length} символов · основан на топ-${topListings.length} листингах конкурентов</div>
+      <button class="btn" style="background:var(--dim);color:var(--text)" onclick="copyElem('gen-title')">📋 Скопировать заголовок</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🔑 Самые популярные 2-словные фразы в заголовках конкурентов</h3></div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Нажми на фразу чтобы скопировать. Используй их в начале своих заголовков.</div>
+      <div class="tags">
+        ${topBigrams.map(([bg,cnt])=>`
+          <span class="tag tag-hot" onclick="copyText('${bg}')" style="cursor:pointer" title="${cnt} листингов">
+            ${bg} <b style="opacity:.5">${cnt}</b>
+          </span>
+        `).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>📝 Оценка твоих заголовков</h3></div>
+    <div class="card">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Заголовок</th><th>Длина</th><th>Оценка</th><th>Что улучшить</th></tr></thead>
+          <tbody>
+            ${myTitleScores.map(t=>`<tr>
+              <td style="max-width:200px;font-weight:500;font-size:12px">${clip(t.title,50)}</td>
+              <td><span class="badge ${t.len>=60&&t.len<=140?'b-green':'b-yellow'}">${t.len}</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div class="conv-track" style="width:60px"><div class="conv-fill-bar" style="width:${t.score}%;background:${t.score>=70?'var(--green)':t.score>=40?'var(--accent2)':'var(--red)'}"></div></div>
+                  <span style="font-size:12px;color:var(--muted)">${t.score}/100</span>
+                </div>
+              </td>
+              <td style="font-size:12px;color:var(--muted)">${t.notes.join(', ')||'✓ Хорошо'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🏆 Примеры лучших заголовков конкурентов</h3></div>
+    <div class="card">
+      ${topListings.slice(0,8).map((l,i)=>`
+        <div style="padding:10px 0;border-bottom:1px solid var(--dim)">
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:var(--text)">${i+1}. ${l.title}</div>
+          <div style="display:flex;gap:10px;font-size:12px;color:var(--muted)">
+            <span>${(l.title||'').length} симв.</span>
+            <span>★ ${l.num_favorers||0} избр.</span>
+            <span style="color:var(--accent2)">$${priceOf(l).toFixed(2)}</span>
+            <button class="btn" style="padding:2px 8px;font-size:11px;background:var(--dim);color:var(--text)" onclick="copyText(\`${(l.title||'').replace(/`/g,"'")}\`)">Скопировать</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+  `;
+
+  el.innerHTML = html;
+}
+
+// ────────────────────────────────────────
+//  💰 КАЛЬКУЛЯТОР ПРИБЫЛИ
+// ────────────────────────────────────────
+function renderProfit() {
+  const el = document.getElementById('panel-profit');
+  const ls = S.myListings;
+  const avgP = ls.length ? avgPrice(ls) : 5;
+
+  el.innerHTML = `
+  <div class="section">
+    <div class="section-hd"><h3>💰 Калькулятор прибыли с учётом комиссий Etsy</h3></div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.7">
+        <strong style="color:var(--text)">Комиссии Etsy (2024):</strong><br>
+        • Комиссия за транзакцию: <strong>6.5%</strong> от цены продажи<br>
+        • Плата за листинг: <strong>$0.20</strong> (каждые 4 месяца)<br>
+        • Etsy Payments (обработка платежа): ~<strong>3% + $0.25</strong><br>
+        • Etsy Ads (если используешь): настраивается вручную
+      </div>
+      <div class="card-grid card-grid-3" style="margin-bottom:16px">
+        <div>
+          <label>Цена продажи ($)</label>
+          <input type="number" id="p-price" value="${avgP.toFixed(2)}" step="0.01" oninput="calcProfit()">
+        </div>
+        <div>
+          <label>Себестоимость ($)</label>
+          <input type="number" id="p-cost" value="0" step="0.01" oninput="calcProfit()">
+        </div>
+        <div>
+          <label>Бюджет Etsy Ads в день ($)</label>
+          <input type="number" id="p-ads" value="0" step="0.01" oninput="calcProfit()">
+        </div>
+        <div>
+          <label>Продаж в месяц (шт.)</label>
+          <input type="number" id="p-sales" value="10" oninput="calcProfit()">
+        </div>
+        <div>
+          <label>Shipping cost (если платишь сам $)</label>
+          <input type="number" id="p-ship" value="0" step="0.01" oninput="calcProfit()">
+        </div>
+        <div>
+          <label>Другие расходы в месяц ($)</label>
+          <input type="number" id="p-other" value="0" step="0.01" oninput="calcProfit()">
+        </div>
+      </div>
+      <div id="profit-result"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>📊 Анализ прибыльности твоих листингов</h3></div>
+    <div class="card">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px">
+        Расчёт базируется только на комиссиях Etsy (без себестоимости и рекламы).
+        Введи себестоимость выше для точного расчёта.
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Листинг</th><th>Цена</th><th>Комиссия Etsy</th><th>Чистая выручка</th><th>Маржа</th></tr></thead>
+          <tbody>
+            ${ls.slice(0,15).map(l=>{
+              const p = priceOf(l);
+              const fee = p*0.065 + p*0.03 + 0.25 + 0.005;
+              const net = p - fee;
+              const margin = p>0 ? (net/p*100) : 0;
+              return `<tr>
+                <td style="max-width:180px;font-weight:500">${clip(l.title,45)}</td>
+                <td style="color:var(--accent2);font-weight:700">$${p.toFixed(2)}</td>
+                <td style="color:var(--red)">-$${fee.toFixed(2)}</td>
+                <td style="color:var(--green);font-weight:700">$${net.toFixed(2)}</td>
+                <td><span class="badge ${margin>=60?'b-green':margin>=40?'b-yellow':'b-red'}">${margin.toFixed(0)}%</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🎯 Какую цену ставить чтобы заработать нужную сумму</h3></div>
+    <div class="card">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end">
+        <div style="flex:1;min-width:140px">
+          <label>Хочу зарабатывать в месяц ($)</label>
+          <input type="number" id="g-goal" value="500" oninput="calcGoal()">
+        </div>
+        <div style="flex:1;min-width:140px">
+          <label>Себестоимость одного товара ($)</label>
+          <input type="number" id="g-cost" value="0" step="0.01" oninput="calcGoal()">
+        </div>
+        <div style="flex:1;min-width:140px">
+          <label>Продаж в месяц (ожидаемо)</label>
+          <input type="number" id="g-sales" value="20" oninput="calcGoal()">
+        </div>
+      </div>
+      <div id="goal-result"></div>
+    </div>
+  </div>
+  `;
+
+  calcProfit();
+  calcGoal();
+}
+
+function calcProfit() {
+  const price  = parseFloat(document.getElementById('p-price')?.value)||0;
+  const cost   = parseFloat(document.getElementById('p-cost')?.value)||0;
+  const ads    = parseFloat(document.getElementById('p-ads')?.value)||0;
+  const sales  = parseFloat(document.getElementById('p-sales')?.value)||0;
+  const ship   = parseFloat(document.getElementById('p-ship')?.value)||0;
+  const other  = parseFloat(document.getElementById('p-other')?.value)||0;
+
+  const txFee    = price * 0.065;
+  const payFee   = price * 0.03 + 0.25;
+  const listFee  = 0.20 / 4; // ~$0.05 per sale at 4mo avg
+  const totalFeePerSale = txFee + payFee + listFee + ship;
+  const netPerSale = price - totalFeePerSale - cost;
+  const adsMonth = ads * 30;
+  const netMonth = netPerSale * sales - adsMonth - other;
+  const revenueMonth = price * sales;
+  const totalCosts = totalFeePerSale * sales + cost * sales + adsMonth + other;
+  const margin = price > 0 ? (netPerSale/price*100) : 0;
+
+  const col = netMonth >= 0 ? 'var(--green)' : 'var(--red)';
+  const el = document.getElementById('profit-result');
+  if (!el) return;
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+      ${[
+        ['Выручка/мес', '$'+revenueMonth.toFixed(2), 'var(--text)'],
+        ['Все расходы/мес', '-$'+totalCosts.toFixed(2), 'var(--red)'],
+        ['Чистая прибыль/мес', (netMonth>=0?'+':'')+'$'+netMonth.toFixed(2), col],
+        ['Маржа с продажи', margin.toFixed(0)+'%', margin>=50?'var(--green)':margin>=30?'var(--accent2)':'var(--red)'],
+      ].map(([l,v,c])=>`
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
+          <div style="font-size:20px;font-weight:800;color:${c};margin-bottom:4px">${v}</div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${l}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="font-size:12px;color:var(--muted);background:var(--card);border-radius:10px;padding:12px 14px;line-height:1.8">
+      За 1 продажу: цена <strong style="color:var(--text)">$${price.toFixed(2)}</strong>
+      − транзакция <strong style="color:var(--red)">$${txFee.toFixed(2)}</strong>
+      − платёж <strong style="color:var(--red)">$${payFee.toFixed(2)}</strong>
+      − листинг <strong style="color:var(--red)">$${listFee.toFixed(2)}</strong>
+      ${cost>0?`− себестоимость <strong style="color:var(--red)">$${cost.toFixed(2)}</strong>`:''}
+      ${ship>0?`− доставка <strong style="color:var(--red)">$${ship.toFixed(2)}</strong>`:''}
+      = <strong style="color:${netPerSale>=0?'var(--green)':'var(--red)'}">$${netPerSale.toFixed(2)}</strong> чистыми
+    </div>
+  `;
+}
+
+function calcGoal() {
+  const goal  = parseFloat(document.getElementById('g-goal')?.value)||500;
+  const cost  = parseFloat(document.getElementById('g-cost')?.value)||0;
+  const sales = parseFloat(document.getElementById('g-sales')?.value)||20;
+  const el = document.getElementById('goal-result');
+  if (!el) return;
+
+  // price * (1 - 0.065 - 0.03) - 0.25 - 0.005 - cost = goal/sales
+  // price * 0.905 = goal/sales + 0.255 + cost
+  const netNeeded = goal / sales;
+  const priceNeeded = (netNeeded + 0.255 + cost) / 0.905;
+  const actualNet = priceNeeded * 0.905 - 0.255 - cost;
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      ${[
+        ['Цена которую надо ставить', '$'+priceNeeded.toFixed(2), 'var(--accent2)'],
+        ['Чистых с одной продажи', '$'+actualNet.toFixed(2), 'var(--green)'],
+        ['Продаж нужно в месяц', sales+' шт.', 'var(--blue)'],
+      ].map(([l,v,c])=>`
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
+          <div style="font-size:22px;font-weight:800;color:${c};margin-bottom:4px">${v}</div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${l}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted)">
+      Чтобы зарабатывать <strong style="color:var(--text)">$${goal}/мес</strong> при ${sales} продажах,
+      ставь цену минимум <strong style="color:var(--accent2)">$${priceNeeded.toFixed(2)}</strong>
+    </div>
+  `;
+}
+
+// ────────────────────────────────────────
+//  📈 МОНИТОРИНГ ДИНАМИКИ
+// ────────────────────────────────────────
+function renderMonitor() {
+  const el = document.getElementById('panel-monitor');
+  const snap = loadSnaps();
+  const hasSnaps = snap.length > 0;
+  const ls = S.myListings;
+  const sh = S.shop;
+
+  el.innerHTML = `
+  <div class="section">
+    <div class="section-hd"><h3>📸 Снимки магазина (мониторинг динамики)</h3></div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7">
+        Сохраняй снимок магазина после каждого анализа. Программа покажет как менялись просмотры,
+        продажи и конверсия — чтобы видеть что работает, а что нет.
+      </div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="saveSnap()">
+        📸 Сохранить снимок сейчас
+      </button>
+    </div>
+    <div id="snaps-list">
+      ${hasSnaps ? renderSnapsList(snap) : '<div class="empty">Нет сохранённых снимков. Нажми кнопку выше чтобы сохранить первый.</div>'}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>📊 Динамика по снимкам</h3></div>
+    <div id="snaps-chart">
+      ${hasSnaps && snap.length >= 2 ? renderSnapChart(snap) : '<div class="card"><div class="empty">Нужно минимум 2 снимка для отображения динамики</div></div>'}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🗂 Управление данными</h3></div>
+    <div class="card" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <button class="btn" style="background:var(--dim);color:var(--text)" onclick="exportSnaps()">📥 Экспортировать все снимки (JSON)</button>
+      <button class="btn" style="background:rgba(248,113,113,.15);color:var(--red)" onclick="clearSnaps()">🗑 Удалить все снимки</button>
+      <span style="font-size:12px;color:var(--muted)">Снимки хранятся в браузере (localStorage)</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>📤 Экспорт в Excel (CSV)</h3></div>
+    <div class="card">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px">
+        Скачай данные в формате CSV — открывается в Excel, Google Sheets, Numbers.
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" style="background:rgba(61,214,140,.15);color:var(--green)" onclick="exportCSV('listings')">📊 Мои листинги</button>
+        <button class="btn" style="background:rgba(91,156,246,.15);color:var(--blue)" onclick="exportCSV('competitors')">🏆 Конкуренты</button>
+        <button class="btn" style="background:rgba(255,179,71,.15);color:var(--accent2)" onclick="exportCSV('keywords')">🏷 Теги и ключевые слова</button>
+        <button class="btn" style="background:rgba(167,139,250,.15);color:var(--purple)" onclick="exportCSV('full')">📦 Всё сразу</button>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+function loadSnaps() {
+  try { return JSON.parse(localStorage.getItem('etsy_snaps')||'[]'); } catch { return []; }
+}
+
+function saveSnaps(snaps) {
+  localStorage.setItem('etsy_snaps', JSON.stringify(snaps));
+}
+
+function saveSnap() {
+  if (!S.shop) { alert('Сначала запусти анализ!'); return; }
+  const ls = S.myListings;
+  const snap = {
+    date: new Date().toLocaleString('ru'),
+    ts: Date.now(),
+    shopName: S.shop.shop_name,
+    sales: S.shop.transaction_sold_count||0,
+    listings: ls.length,
+    totalViews: ls.reduce((s,l)=>s+(l.views||0),0),
+    totalFavs:  ls.reduce((s,l)=>s+(l.num_favorers||0),0),
+    avgPrice:   avgPrice(ls).toFixed(2),
+    seoScore:   calcSeoScore(ls),
+    reviews:    S.shop.review_count||0,
+    rating:     S.shop.review_average||0,
+    topListings: [...ls].sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,5).map(l=>({
+      title: clip(l.title,50), views: l.views||0, favs: l.num_favorers||0, price: priceOf(l)
+    }))
+  };
+  const snaps = loadSnaps();
+  snaps.unshift(snap);
+  saveSnaps(snaps.slice(0,20)); // max 20 снимков
+  renderMonitor();
+  alert(`✓ Снимок сохранён: ${snap.date}`);
+}
+
+function renderSnapsList(snaps) {
+  return `<div class="card">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Дата</th><th>Продаж</th><th>Листингов</th><th>Просмотры</th><th>Избранное</th><th>SEO</th><th>Ср. цена</th></tr></thead>
+        <tbody>
+          ${snaps.map((s,i)=>{
+            const prev = snaps[i+1];
+            const dv = prev ? s.totalViews - prev.totalViews : 0;
+            const ds = prev ? s.sales - prev.sales : 0;
+            return `<tr>
+              <td style="color:var(--muted);white-space:nowrap">${s.date}</td>
+              <td>
+                <strong>${s.sales}</strong>
+                ${prev?`<span style="font-size:11px;color:${ds>=0?'var(--green)':'var(--red)'};margin-left:4px">${ds>=0?'+':''}${ds}</span>`:''}
+              </td>
+              <td>${s.listings}</td>
+              <td>
+                ${(s.totalViews||0).toLocaleString()}
+                ${prev?`<span style="font-size:11px;color:${dv>=0?'var(--green)':'var(--red)'};margin-left:4px">${dv>=0?'+':''}${dv}</span>`:''}
+              </td>
+              <td>${(s.totalFavs||0).toLocaleString()}</td>
+              <td><span class="badge ${s.seoScore>=70?'b-green':s.seoScore>=40?'b-yellow':'b-red'}">${s.seoScore}</span></td>
+              <td>$${s.avgPrice}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderSnapChart(snaps) {
+  const rev = [...snaps].reverse();
+  const maxViews = Math.max(...rev.map(s=>s.totalViews||0)) || 1;
+  const maxSales = Math.max(...rev.map(s=>s.sales||0)) || 1;
+  return `<div class="card">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
+      <span style="color:var(--blue)">■</span> Просмотры &nbsp;
+      <span style="color:var(--green)">■</span> Продажи (×10 для масштаба)
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:6px;height:120px;padding-bottom:4px">
+      ${rev.map(s=>`
+        <div style="flex:1;display:flex;gap:2px;align-items:flex-end;min-width:20px">
+          <div style="flex:1;background:var(--blue);opacity:.7;border-radius:3px 3px 0 0;height:${Math.round((s.totalViews||0)/maxViews*110)}px" title="Просмотры: ${s.totalViews}"></div>
+          <div style="flex:1;background:var(--green);border-radius:3px 3px 0 0;height:${Math.round((s.sales||0)/maxSales*110)}px" title="Продажи: ${s.sales}"></div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="display:flex;gap:6px;margin-top:6px">
+      ${rev.map(s=>`<div style="flex:1;font-size:10px;color:var(--muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.date.split(',')[0]}</div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function clearSnaps() {
+  if (!confirm('Удалить все снимки? Это нельзя отменить.')) return;
+  localStorage.removeItem('etsy_snaps');
+  renderMonitor();
+}
+
+function exportSnaps() {
+  const snaps = loadSnaps();
+  if (!snaps.length) { alert('Нет снимков для экспорта'); return; }
+  downloadFile('etsy_snapshots.json', JSON.stringify(snaps, null, 2), 'application/json');
+}
+
+// ────────────────────────────────────────
+//  📤 ЭКСПОРТ В CSV
+// ────────────────────────────────────────
+function exportCSV(type) {
+  if (!S.myListings.length && !Object.keys(S.markets).length) {
+    alert('Сначала запусти анализ!'); return;
+  }
+
+  if (type === 'listings' || type === 'full') {
+    const rows = [['Заголовок','Цена','Просмотры','Избранное','Конверсия %','Теги','Кол-во тегов','Фото','Длина заголовка']];
+    for (const l of S.myListings) {
+      const p = priceOf(l), v = l.views||0, f = l.num_favorers||0;
+      rows.push([
+        `"${(l.title||'').replace(/"/g,"'")}"`,
+        p.toFixed(2), v, f,
+        v>0?(f/v*100).toFixed(1):0,
+        `"${(l.tags||[]).join(', ')}"`,
+        (l.tags||[]).length,
+        (l.images||[]).length,
+        (l.title||'').length
+      ]);
+    }
+    downloadFile('etsy_my_listings.csv', rows.map(r=>r.join(',')).join('\n'), 'text/csv');
+  }
+
+  if (type === 'competitors' || type === 'full') {
+    const rows = [['Ключевое слово','Заголовок','Цена','Избранное','Просмотры','Конверсия %','Магазин','Теги']];
+    for (const [kw, listings] of Object.entries(S.markets)) {
+      for (const l of listings) {
+        const p = priceOf(l), v = l.views||0, f = l.num_favorers||0;
+        rows.push([
+          `"${kw}"`,
+          `"${(l.title||'').replace(/"/g,"'")}"`,
+          p.toFixed(2), f, v,
+          v>0?(f/v*100).toFixed(1):0,
+          `"${l.shop?.shop_name||''}"`,
+          `"${(l.tags||[]).join(', ')}"`
+        ]);
+      }
+    }
+    downloadFile('etsy_competitors.csv', rows.map(r=>r.join(',')).join('\n'), 'text/csv');
+  }
+
+  if (type === 'keywords' || type === 'full') {
+    const allMarket = Object.values(S.markets).flat();
+    const myTags = new Set(S.myListings.flatMap(l=>l.tags||[]).map(t=>t.toLowerCase()));
+    const compTags = allMarket.flatMap(l=>l.tags||[]).map(t=>t.toLowerCase());
+    const tagFreq = freqMap(compTags);
+    const rows = [['Тег','Частота у конкурентов','Есть у меня']];
+    Object.entries(tagFreq).sort((a,b)=>b[1]-a[1]).forEach(([tag,cnt])=>{
+      rows.push([`"${tag}"`, cnt, myTags.has(tag)?'Да':'Нет']);
+    });
+    downloadFile('etsy_keywords.csv', rows.map(r=>r.join(',')).join('\n'), 'text/csv');
+  }
+}
+
+function downloadFile(name, content, mime) {
+  const blob = new Blob(['\uFEFF'+content], {type: mime+';charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function copyElem(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard?.writeText(el.textContent);
+  el.style.outline = '2px solid var(--green)';
+  setTimeout(()=>el.style.outline='', 1500);
+}
+
+// ────────────────────────────────────────
+//  🤖 AI ГЕНЕРАТОР ОПИСАНИЙ
+// ────────────────────────────────────────
+function renderAI() {
+  const el = document.getElementById('panel-ai');
+  const ls = S.myListings;
+
+  const listingOptions = ls.slice(0, 30).map((l,i) =>
+    `<option value="${i}">${clip(l.title, 60)} — $${priceOf(l).toFixed(2)}</option>`
+  ).join('');
+
+  el.innerHTML = `
+  <div class="section">
+    <div class="section-hd"><h3>🤖 AI Генератор описаний листингов</h3></div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7">
+        Выбери листинг или введи данные вручную. AI напишет SEO-оптимизированное описание
+        на английском языке с ключевыми словами из топа конкурентов.
+        <br><span style="color:var(--accent)">Требует Anthropic API ключ (введи в настройках выше).</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+          <label>Выбери свой листинг</label>
+          <select id="ai-listing" style="width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:13px;color:var(--text);outline:none" onchange="aiPickListing(this.value)">
+            <option value="">— выбери листинг —</option>
+            ${listingOptions}
+          </select>
+        </div>
+        <div>
+          <label>Или введи название товара вручную</label>
+          <input type="text" id="ai-custom-title" placeholder="Bible Study Printable Pack PDF">
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+          <label>Цена товара</label>
+          <input type="text" id="ai-price" placeholder="$4.99">
+        </div>
+        <div>
+          <label>Формат</label>
+          <select id="ai-format" style="width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:13px;color:var(--text);outline:none">
+            <option>PDF Printable</option>
+            <option>Digital Download</option>
+            <option>Instant Download PDF</option>
+            <option>Printable Bundle</option>
+            <option>Digital Journal</option>
+          </select>
+        </div>
+        <div>
+          <label>Тон описания</label>
+          <select id="ai-tone" style="width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:13px;color:var(--text);outline:none">
+            <option>Вдохновляющий (Christian/Faith)</option>
+            <option>Профессиональный</option>
+            <option>Тёплый и дружественный</option>
+            <option>Краткий и чёткий</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label>Главные особенности товара (через запятую)</label>
+        <input type="text" id="ai-features" placeholder="13 pages, daily prompts, scripture references, instant download, US Letter format">
+      </div>
+
+      <button class="btn btn-primary" style="width:auto;padding:11px 28px" onclick="generateDesc()">
+        ✨ Сгенерировать описание
+      </button>
+    </div>
+
+    <div id="ai-result" style="display:none">
+      <div class="card" style="border-color:rgba(167,139,250,.3)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:13px;font-weight:700;color:var(--purple)">✨ Сгенерированное описание</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn" style="background:var(--dim);color:var(--text);padding:6px 12px;font-size:12px" onclick="copyElem('ai-output')">📋 Скопировать</button>
+            <button class="btn" style="background:rgba(167,139,250,.15);color:var(--purple);padding:6px 12px;font-size:12px" onclick="generateDesc()">🔄 Перегенерировать</button>
+          </div>
+        </div>
+        <div id="ai-output" style="font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap;max-height:500px;overflow-y:auto;padding:4px"></div>
+        <div id="ai-stats" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="section-hd"><h3>💡 Советы по описаниям на Etsy</h3></div>
+      ${[
+        ['Первые 160 символов', 'Показываются в превью поиска. Начни с самого важного ключевого слова.'],
+        ['Структура', 'Абзацы короткие (2-3 строки). Используй эмодзи как маркеры списка.'],
+        ['Ключевые слова', 'Повтори главные ключевые слова 3-5 раз естественно по тексту.'],
+        ['Что включать', 'Формат, размер, количество страниц, для кого, как использовать, что получат.'],
+        ['Призыв к действию', 'Заканчивай на «Add to cart» или «Download instantly».'],
+      ].map(([t,b])=>`
+        <div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--dim)">
+          <span style="color:var(--purple);font-weight:700;white-space:nowrap;font-size:13px">${t}</span>
+          <span style="font-size:13px;color:var(--muted)">${b}</span>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+function aiPickListing(idx) {
+  if (idx === '') return;
+  const l = S.myListings[parseInt(idx)];
+  if (!l) return;
+  document.getElementById('ai-custom-title').value = l.title || '';
+  document.getElementById('ai-price').value = '$' + priceOf(l).toFixed(2);
+  if (l.tags?.length) {
+    document.getElementById('ai-features').value = l.tags.slice(0,6).join(', ');
+  }
+}
+
+async function generateDesc() {
+
+
+  const title    = document.getElementById('ai-custom-title').value.trim() || 'Digital Printable';
+  const price    = document.getElementById('ai-price').value.trim() || '$4.99';
+  const format   = document.getElementById('ai-format').value;
+  const tone     = document.getElementById('ai-tone').value;
+  const features = document.getElementById('ai-features').value.trim();
+
+  const allMarket = Object.values(S.markets).flat();
+  const topTags   = Object.entries(freqMap(allMarket.flatMap(l=>l.tags||[])))
+    .sort((a,b)=>b[1]-a[1]).slice(0,15).map(([t])=>t).join(', ');
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '⏳ Генерирую...';
+
+  const resultEl = document.getElementById('ai-result');
+  const outputEl = document.getElementById('ai-output');
+  const statsEl  = document.getElementById('ai-stats');
+  resultEl.style.display = 'block';
+  outputEl.textContent = 'Генерирую описание...';
+
+  const prompt = `Write an SEO-optimized Etsy listing description in English for this digital product:
+
+Title: ${title}
+Price: ${price}
+Format: ${format}
+Tone: ${tone}
+Key features: ${features || 'printable, instant download, high quality'}
+Top competitor keywords to naturally include: ${topTags || 'printable, digital download, instant download'}
+
+Requirements:
+- 300-500 words total
+- Start with the most important keyword in the first sentence
+- Use short paragraphs (2-3 lines max)
+- Use emojis as bullet points (✨ ✅ 📄 🖨️ etc.)
+- Include: what it is, who it's for, what's included, how to use, technical details (format/size)
+- End with a clear call to action
+- Naturally repeat main keywords 3-4 times
+- Do NOT use markdown headers, just plain text with emojis
+- Make it warm, genuine, and compelling`;
+
+  try {
+    const resp = await fetch('/api/ai/description', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ prompt })
+    });
+
+    if (!resp.ok) {
+      const t = await resp.text();
+      throw new Error(`Claude API ${resp.status}: ${t.slice(0,200)}`);
+    }
+
+    const data = await resp.json();
+    const text = data.content?.[0]?.text || 'Не удалось получить ответ';
+    outputEl.textContent = text;
+    statsEl.innerHTML = `
+      <span>📝 ${text.length} символов</span> &nbsp;·&nbsp;
+      <span>📖 ~${Math.round(text.split(/\s+/).length)} слов</span> &nbsp;·&nbsp;
+      <span style="color:var(--green)">✓ Готово к использованию</span>
+    `;
+  } catch(e) {
+    outputEl.textContent = '❌ Ошибка: ' + e.message;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✨ Сгенерировать описание';
+}
+
+// ────────────────────────────────────────
+//  📅 СЕЗОННОСТЬ И ТРЕНДЫ
+// ────────────────────────────────────────
+function renderSeason() {
+  const el = document.getElementById('panel-season');
+
+  // Сезонные данные Etsy (общая статистика платформы по нишам)
+  const months = ['Янв','Фев','Март','Апр','Май','Июнь','Июль','Авг','Сент','Окт','Ноябрь','Дек'];
+
+  // Индексы сезонности для разных категорий (100 = среднее)
+  const seasonData = {
+    'Bible / Christian': [85,90,120,100,95,80,75,85,95,105,115,155],
+    'Journals / Planners': [140,110,95,85,90,80,75,90,120,110,105,145],
+    'Prayer / Devotional': [90,95,115,100,90,80,75,85,100,110,120,160],
+    'Printable PDF': [110,100,95,90,95,85,80,100,115,110,110,130],
+    'Gift / Cards': [70,120,85,100,120,100,80,85,90,110,130,170],
+    'Bookbinding / Craft': [100,95,100,105,110,95,85,90,100,110,115,120],
+  };
+
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const nextMonth = (currentMonth + 1) % 12;
+
+  // Подобрать категорию на основе ключевых слов
+  const kws = Object.keys(S.markets).join(' ').toLowerCase();
+  let bestCat = 'Printable PDF';
+  if (kws.includes('bible')||kws.includes('christian')||kws.includes('scripture')) bestCat = 'Bible / Christian';
+  else if (kws.includes('prayer')||kws.includes('devotional')) bestCat = 'Prayer / Devotional';
+  else if (kws.includes('journal')||kws.includes('planner')) bestCat = 'Journals / Planners';
+  else if (kws.includes('gift')||kws.includes('card')) bestCat = 'Gift / Cards';
+  else if (kws.includes('bind')||kws.includes('craft')) bestCat = 'Bookbinding / Craft';
+
+  const catData = seasonData[bestCat];
+  const maxVal = Math.max(...catData);
+  const currentVal = catData[currentMonth];
+  const nextVal = catData[nextMonth];
+
+  // Праздники и события по месяцам
+  const events = {
+    0:  ['Новый год (подведение итогов)', 'Зимние распродажи заканчиваются', 'Bible reading plans — пик'],
+    1:  ['День Св. Валентина (14 фев)', 'Presidents Day (USA)', 'Подарочные наборы — рост'],
+    2:  ['Великий Пост начинается', 'Пасха (ранняя)', 'St. Patricks Day (17 марта)', 'Начало весны — рост'],
+    3:  ['Пасха (поздняя)', 'Easter printables — пик', 'Spring cleaning — рост'],
+    4:  ['День матери (2-е воскресенье)', 'Выпускной сезон', 'Memorial Day (конец мая)'],
+    5:  ['Лето начинается — спад', 'Fathers Day (3-е воскресенье)', 'Vacation Bible School'],
+    6:  ['4 July (День независимости США)', 'Летний спад продаж', 'Готовь осенние листинги'],
+    7:  ['Back to School — рост', 'Подготовка к осени', 'Обнови листинги — буст от Etsy'],
+    8:  ['Осень начинается — рост', 'Rosh Hashanah (перемен.)', 'Подготовка к Рождеству'],
+    9:  ['Halloween (31 окт)', 'Октябрь — рост трафика', 'Начинай рождественские листинги'],
+    10: ['Thanksgiving (4-й четверг)', 'Black Friday / Cyber Monday — ПИКОВЫЕ ПРОДАЖИ', 'Рождественские покупки'],
+    11: ['Рождество (25 дек)', 'Декабрь — ПИКОВЫЙ месяц', 'Hanukkah', 'Cyber Week'],
+  };
+
+  let html = `
+  <div class="section">
+    <div class="section-hd"><h3>📅 Сезонность продаж — категория «${bestCat}»</h3></div>
+    <div class="card-grid card-grid-3" style="margin-bottom:14px">
+      ${miniMetric(months[currentMonth], 'Текущий месяц')}
+      ${miniMetric(currentVal+'/100', 'Индекс сезонности сейчас')}
+      ${miniMetric(nextVal > currentVal ? '📈 Рост' : nextVal < currentVal ? '📉 Спад' : '→ Стабильно', 'Следующий месяц')}
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
+        100 = среднее. Выше 100 — выше среднего трафика. Оранжевая полоса — текущий месяц.
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:5px;height:120px;margin-bottom:8px">
+        ${catData.map((v,i)=>{
+          const h = Math.round(v/maxVal*110);
+          const isCurrent = i === currentMonth;
+          const isNext = i === nextMonth;
+          const color = isCurrent ? 'var(--accent)' : isNext ? 'var(--accent2)' : v>=120?'var(--green)':v<=85?'var(--red)':'var(--blue)';
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+            <div style="font-size:10px;color:var(--muted)">${v}</div>
+            <div style="width:100%;height:${h}px;background:${color};border-radius:3px 3px 0 0;opacity:${isCurrent?1:0.7}" title="${months[i]}: ${v}"></div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="display:flex;gap:5px">
+        ${months.map((m,i)=>`<div style="flex:1;font-size:9px;color:${i===currentMonth?'var(--accent)':'var(--muted)'};text-align:center;font-weight:${i===currentMonth?700:400}">${m}</div>`).join('')}
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted)">
+        <span style="color:var(--accent)">■</span> Сейчас &nbsp;
+        <span style="color:var(--accent2)">■</span> Следующий месяц &nbsp;
+        <span style="color:var(--green)">■</span> Высокий сезон &nbsp;
+        <span style="color:var(--red)">■</span> Низкий сезон
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🗓 Ключевые события по месяцам (США)</h3></div>
+    <div class="card">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Месяц</th><th>Индекс</th><th>События и что делать</th></tr></thead>
+          <tbody>
+            ${months.map((m,i)=>{
+              const v = catData[i];
+              const isCurrent = i === currentMonth;
+              return `<tr style="${isCurrent?'background:rgba(244,98,42,.07)':''}">
+                <td style="font-weight:${isCurrent?700:400};color:${isCurrent?'var(--accent)':'var(--text)'};white-space:nowrap">
+                  ${isCurrent?'▶ ':''} ${m}
+                </td>
+                <td><span class="badge ${v>=120?'b-green':v<=85?'b-red':'b-blue'}">${v}</span></td>
+                <td style="font-size:12px;color:var(--muted)">${(events[i]||[]).join(' · ')}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>⚡ Что делать прямо сейчас</h3></div>
+    <div class="card">
+      ${seasonalAdvice(currentMonth, nextMonth, catData)}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>📋 Контент-план на 3 месяца</h3></div>
+    <div class="card">
+      ${[0,1,2].map(offset=>{
+        const mi = (currentMonth + offset) % 12;
+        const ev = events[mi] || [];
+        const idx = catData[mi];
+        return `<div style="padding:12px 0;border-bottom:1px solid var(--dim)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <span style="font-size:14px;font-weight:700;color:${offset===0?'var(--accent)':'var(--text)'}">${months[mi]}</span>
+            <span class="badge ${idx>=120?'b-green':idx<=85?'b-red':'b-yellow'}">Индекс ${idx}</span>
+            <span style="font-size:12px;color:var(--muted)">${offset===0?'← сейчас':offset===1?'следующий':'через 2 мес.'}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.8">
+            ${ev.map(e=>`· ${e}`).join('<br>')}
+            ${idx>=120 ? '<br>✅ <strong style="color:var(--green)">Высокий сезон — активно рекламируй существующие листинги</strong>' : ''}
+            ${idx<=85 ? '<br>💡 <strong style="color:var(--accent2)">Низкий сезон — обновляй теги, добавляй новые листинги к росту</strong>' : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+  `;
+
+  // Выбор категории
+  html = `
+  <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:13px;color:var(--muted)">Категория:</span>
+    ${Object.keys(seasonData).map(cat=>`
+      <button class="btn" onclick="changeSeason('${cat}')"
+        style="padding:6px 14px;font-size:12px;${cat===bestCat?'background:var(--accent);color:#fff':'background:var(--dim);color:var(--text)'}">
+        ${cat}
+      </button>
+    `).join('')}
+  </div>
+  ` + html;
+
+  el.innerHTML = html;
+  window._seasonData = seasonData;
+  window._currentMonth = currentMonth;
+  window._nextMonth = nextMonth;
+}
+
+function changeSeason(cat) {
+  // Перерисовать с новой категорией
+  const sd = window._seasonData;
+  if (!sd || !sd[cat]) return;
+  // Временно подменяем данные и перерисовываем
+  const orig = Object.keys(S.markets).join(' ');
+  S.markets['__cat__'+cat] = [];
+  renderSeason();
+  delete S.markets['__cat__'+cat];
+}
+
+function seasonalAdvice(cur, next, data) {
+  const curVal = data[cur], nextVal = data[next];
+  const months = ['Янв','Фев','Март','Апр','Май','Июнь','Июль','Авг','Сент','Окт','Ноябрь','Дек'];
+  const items = [];
+  if (curVal >= 120) items.push({c:'var(--green)', t:'Высокий сезон!', b:'Увеличь бюджет Etsy Ads. Не добавляй новые листинги — продвигай существующие.'});
+  else if (curVal <= 85) items.push({c:'var(--accent2)', t:'Низкий сезон', b:'Обновляй теги и описания. Добавляй новые листинги — они получат буст когда начнётся рост.'});
+  else items.push({c:'var(--blue)', t:'Средний сезон', b:'Стабильный период. Хороший момент для тестирования новых цен и фото.'});
+
+  if (nextVal > curVal + 10) items.push({c:'var(--green)', t:`Готовься к росту в ${months[next]}`, b:`Индекс вырастет с ${curVal} до ${nextVal}. Обнови листинги уже сейчас — за 2-3 недели до пика.`});
+  if (nextVal < curVal - 10) items.push({c:'var(--accent2)', t:`Готовься к спаду в ${months[next]}`, b:`Индекс упадёт с ${curVal} до ${nextVal}. Создай новые листинги заранее под следующий сезонный пик.`});
+
+  const peakMonth = data.indexOf(Math.max(...data));
+  if (peakMonth !== cur) items.push({c:'var(--purple)', t:`Пиковый месяц — ${months[peakMonth]}`, b:`Готовь листинги и фото за 4-6 недель до пика. Это твой главный месяц продаж.`});
+
+  return items.map(i=>`
+    <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--dim);align-items:flex-start">
+      <div style="width:4px;border-radius:99px;background:${i.c};align-self:stretch;flex-shrink:0"></div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:${i.c};margin-bottom:3px">${i.t}</div>
+        <div style="font-size:13px;color:var(--muted)">${i.b}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ────────────────────────────────────────
+//  ⚔️ СРАВНЕНИЕ С КОНКУРЕНТОМ
+// ────────────────────────────────────────
+function renderRival() {
+  const el = document.getElementById('panel-rival');
+
+  if (!S.rivalData) {
+    el.innerHTML = `
+    <div class="card" style="text-align:center;padding:40px">
+      <div style="font-size:32px;margin-bottom:14px">⚔️</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">Конкурент не загружен</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px">
+        Введи название магазина конкурента в поле «Магазин конкурента» в настройках и запусти анализ заново.
+      </div>
+    </div>`;
+    return;
+  }
+
+  const me = S.myListings;
+  const rival = S.rivalData.listings;
+  const rshop = S.rivalData.shop;
+
+  const myAvgP    = avgPrice(me);
+  const rivalAvgP = avgPrice(rival);
+  const myViews   = me.reduce((s,l)=>s+(l.views||0),0);
+  const rivalViews= rival.reduce((s,l)=>s+(l.views||0),0);
+  const myFavs    = me.reduce((s,l)=>s+(l.num_favorers||0),0);
+  const rivalFavs = rival.reduce((s,l)=>s+(l.num_favorers||0),0);
+  const myConv    = myViews>0?(myFavs/myViews*100):0;
+  const rivalConv = rivalViews>0?(rivalFavs/rivalViews*100):0;
+  const mySeo     = calcSeoScore(me);
+  const rivalSeo  = calcSeoScore(rival);
+
+  const myTags    = new Set(me.flatMap(l=>l.tags||[]).map(t=>t.toLowerCase()));
+  const rivalTags = new Set(rival.flatMap(l=>l.tags||[]).map(t=>t.toLowerCase()));
+  const onlyRival = [...rivalTags].filter(t=>!myTags.has(t));
+  const onlyMine  = [...myTags].filter(t=>!rivalTags.has(t));
+  const shared    = [...myTags].filter(t=>rivalTags.has(t));
+
+  function cmpRow(label, myVal, rivalVal, fmt='num', higherIsBetter=true) {
+    const myN = parseFloat(myVal);
+    const rN  = parseFloat(rivalVal);
+    const iWin = higherIsBetter ? myN >= rN : myN <= rN;
+    return `<tr>
+      <td style="color:var(--muted);font-size:13px">${label}</td>
+      <td style="text-align:center">
+        <span style="font-size:14px;font-weight:700;color:${iWin?'var(--green)':'var(--text)'}">
+          ${fmt==='$'?'$'+myN.toFixed(2):fmt==='%'?myN.toFixed(1)+'%':Math.round(myN).toLocaleString()}
+        </span>
+        ${iWin?'<span style="color:var(--green);font-size:11px"> ✓</span>':''}
+      </td>
+      <td style="text-align:center">
+        <span style="font-size:14px;font-weight:700;color:${!iWin?'var(--green)':'var(--text)'}">
+          ${fmt==='$'?'$'+rN.toFixed(2):fmt==='%'?rN.toFixed(1)+'%':Math.round(rN).toLocaleString()}
+        </span>
+        ${!iWin?'<span style="color:var(--green);font-size:11px"> ✓</span>':''}
+      </td>
+    </tr>`;
+  }
+
+  const myWins = [
+    myAvgP > rivalAvgP, me.length > rival.length, myConv > rivalConv, mySeo > rivalSeo,
+    myFavs > rivalFavs, myViews > rivalViews,
+    (S.shop?.review_average||0) > (rshop?.review_average||0),
+    (S.shop?.transaction_sold_count||0) > (rshop?.transaction_sold_count||0)
+  ].filter(Boolean).length;
+
+  el.innerHTML = `
+  <div class="section">
+    <div class="section-hd"><h3>⚔️ ${S.shop?.shop_name||'Мой магазин'} vs ${rshop?.shop_name||S.rivalShop}</h3></div>
+
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;margin-bottom:18px;align-items:center">
+      <div class="card" style="text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--accent);margin-bottom:4px">${S.shop?.shop_name||'Мой'}</div>
+        <div style="font-size:12px;color:var(--muted)">${me.length} листингов</div>
+        <div style="font-size:28px;font-weight:900;color:${myWins>=4?'var(--green)':'var(--accent2)'};margin-top:8px">${myWins}/8</div>
+        <div style="font-size:11px;color:var(--muted)">побед</div>
+      </div>
+      <div style="font-size:28px;text-align:center">⚔️</div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--blue);margin-bottom:4px">${rshop?.shop_name||S.rivalShop}</div>
+        <div style="font-size:12px;color:var(--muted)">${rival.length} листингов</div>
+        <div style="font-size:28px;font-weight:900;color:${myWins<4?'var(--green)':'var(--accent2)'};margin-top:8px">${8-myWins}/8</div>
+        <div style="font-size:11px;color:var(--muted)">побед</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Метрика</th>
+            <th style="text-align:center;color:var(--accent)">${S.shop?.shop_name||'Я'}</th>
+            <th style="text-align:center;color:var(--blue)">${rshop?.shop_name||'Конкурент'}</th>
+          </tr></thead>
+          <tbody>
+            ${cmpRow('Листингов', me.length, rival.length)}
+            ${cmpRow('Продаж всего', S.shop?.transaction_sold_count||0, rshop?.transaction_sold_count||0)}
+            ${cmpRow('Отзывов', S.shop?.review_count||0, rshop?.review_count||0)}
+            ${cmpRow('Рейтинг ★', S.shop?.review_average||0, rshop?.review_average||0, '%')}
+            ${cmpRow('Средняя цена', myAvgP, rivalAvgP, '$')}
+            ${cmpRow('Суммарные просмотры', myViews, rivalViews)}
+            ${cmpRow('Суммарное избранное', myFavs, rivalFavs)}
+            ${cmpRow('Конверсия %', myConv, rivalConv, '%')}
+            ${cmpRow('SEO оценка', mySeo, rivalSeo)}
+            ${cmpRow('Уникальных тегов', myTags.size, rivalTags.size)}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🏷 Сравнение тегов</h3></div>
+    <div class="card-grid card-grid-3">
+      <div class="card">
+        <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:10px">✓ Общие теги (${shared.length})</div>
+        <div class="tags">${shared.slice(0,20).map(t=>`<span class="tag tag-mine">${t}</span>`).join('')}</div>
+      </div>
+      <div class="card">
+        <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px">🆕 Только у конкурента (${onlyRival.length}) — добавь себе!</div>
+        <div class="tags">${onlyRival.slice(0,20).map(t=>`<span class="tag tag-new" onclick="copyText('${t}')">${t}</span>`).join('')}</div>
+      </div>
+      <div class="card">
+        <div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:10px">⭐ Только у меня (${onlyMine.length})</div>
+        <div class="tags">${onlyMine.slice(0,20).map(t=>`<span class="tag tag-hot">${t}</span>`).join('')}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🏆 Топ листинги конкурента</h3></div>
+    <div class="card">
+      ${[...rival].sort((a,b)=>(b.num_favorers||0)-(a.num_favorers||0)).slice(0,10).map((l,i)=>listingItem(l,i+1)).join('')}
+    </div>
+  </div>
+  `;
+}
+
+// ────────────────────────────────────────
+//  🚀 ЧЕКЛИСТ ЗАПУСКА ЛИСТИНГА
+// ────────────────────────────────────────
+function renderLaunch() {
+  const el = document.getElementById('panel-launch');
+
+  const sections = [
+    {
+      title: '📝 До создания листинга',
+      color: 'var(--blue)',
+      items: [
+        { text: 'Исследовал ключевые слова (вкладка «Ключевые слова»)', tip: 'Используй топ-теги конкурентов как основу' },
+        { text: 'Проверил среднюю цену рынка (вкладка «Конкуренты»)', tip: 'Оставайся в пределах ±20% от медианы' },
+        { text: 'Изучил топ-10 листингов конкурентов в своей нише', tip: 'Запиши что объединяет самые популярные — структура заголовка, тип фото, формат' },
+        { text: 'Определил уникальное преимущество (чем лучше конкурентов)', tip: 'Больше страниц, красивее дизайн, дешевле, уникальная тема' },
+        { text: 'Проверил сезонность (вкладка «Сезонность»)', tip: 'Не запускай в период низкого сезона если можно подождать' },
+      ]
+    },
+    {
+      title: '🖼 Фотографии и визуал',
+      color: 'var(--purple)',
+      items: [
+        { text: 'Создано минимум 7-10 фотографий листинга', tip: 'Etsy продвигает листинги с 7+ фото' },
+        { text: 'Первое фото — яркое, чёткое, с хорошим контрастом', tip: 'Именно оно показывается в поиске — от него зависит CTR' },
+        { text: 'Есть mockup на lifestyle фоне (рабочий стол, руки, интерьер)', tip: 'Показывает контекст использования — повышает конверсию' },
+        { text: 'Есть фото с видимым текстом внутри продукта', tip: 'Покупатель хочет видеть что получит' },
+        { text: 'Размер 2000×2000px или больше', tip: 'Меньший размер ухудшает отображение в поиске' },
+        { text: 'Добавлено видео (хотя бы 10-30 сек)', tip: 'Листинги с видео получают приоритет в поиске Etsy' },
+      ]
+    },
+    {
+      title: '✍️ Заголовок и теги',
+      color: 'var(--accent2)',
+      items: [
+        { text: 'Заголовок 80-140 символов с главным ключевым словом в начале', tip: 'Первые 3 слова самые важные — именно их индексирует Etsy' },
+        { text: 'Использованы все 13 тегов', tip: 'Каждый тег — отдельная возможность попасть в поиск' },
+        { text: 'Большинство тегов — 2-3 слова (не одно слово)', tip: 'Многословные теги точнее попадают в целевой поиск' },
+        { text: 'Теги не дублируют заголовок дословно', tip: 'Etsy учитывает заголовок отдельно — не трать теги на повторы' },
+        { text: 'Добавлены синонимы и варианты написания', tip: 'Например: journal / planner / notebook / diary' },
+      ]
+    },
+    {
+      title: '📄 Описание',
+      color: 'var(--green)',
+      items: [
+        { text: 'Первые 160 символов содержат главное ключевое слово', tip: 'Это превью в поиске Google и Etsy' },
+        { text: 'Описание 300-500 слов', tip: 'Слишком короткое — плохой SEO сигнал' },
+        { text: 'Есть раздел «What You\'ll Get» (что получит покупатель)', tip: 'Перечисли конкретно: страницы, форматы, размеры' },
+        { text: 'Есть технические детали (формат, размер, страниц)', tip: 'PDF, US Letter / A4, количество страниц' },
+        { text: 'Есть инструкция по скачиванию', tip: 'Многие покупатели первый раз — объясни процесс' },
+        { text: 'Использованы ключевые слова 3-4 раза по тексту', tip: 'Естественно, не спамом — читаемость важна' },
+      ]
+    },
+    {
+      title: '💰 Цена и настройки',
+      color: 'var(--accent)',
+      items: [
+        { text: 'Цена в рыночном диапазоне (±20% от медианы)', tip: 'Слишком дёшево — выглядит подозрительно. Слишком дорого — не купят.' },
+        { text: 'Настроена секция «Materials» с ключевыми словами', tip: 'Etsy индексирует и это поле' },
+        { text: 'Выбрана правильная категория и подкатегория', tip: 'Неправильная категория — листинг не найдут' },
+        { text: 'Включены все варианты (если есть)', tip: 'Например: размер, формат A4/Letter, цветной/ч-б' },
+        { text: 'Настроена политика возврата', tip: 'Для цифровых товаров — обычно «No refunds»' },
+      ]
+    },
+    {
+      title: '🚀 После публикации',
+      color: 'var(--red)',
+      items: [
+        { text: 'Поделился в Pinterest (лучший трафик для Etsy)', tip: 'Pinterest — главный внешний источник трафика на Etsy' },
+        { text: 'Запустил Etsy Ads на $1-3/день на 2 недели', tip: 'Новые листинги нуждаются в буст-трафике для первых продаж' },
+        { text: 'Добавил листинг в коллекции магазина', tip: 'Покупатели просматривают коллекции — повышает видимость' },
+        { text: 'Проверил как листинг выглядит на мобильном', tip: '70%+ покупателей Etsy — мобильные пользователи' },
+        { text: 'Запланировал проверить результаты через 2 недели', tip: 'Если <100 просмотров за 2 недели — меняй главное фото и заголовок' },
+      ]
+    },
+  ];
+
+  // Загрузить сохранённый прогресс
+  const saved = JSON.parse(localStorage.getItem('etsy_checklist')||'{}');
+
+  let html = `
+  <div class="section">
+    <div class="section-hd"><h3>🚀 Чеклист запуска нового листинга</h3></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div id="checklist-progress" style="font-size:13px;color:var(--muted)"></div>
+      <button class="btn" style="background:var(--dim);color:var(--text);padding:7px 14px;font-size:12px" onclick="resetChecklist()">🔄 Сбросить для нового листинга</button>
+    </div>
+  `;
+
+  let totalItems = 0;
+  sections.forEach((sec, si) => {
+    html += `<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--dim)">
+        <div style="width:4px;height:20px;background:${sec.color};border-radius:99px;flex-shrink:0"></div>
+        <h3 style="font-size:14px;font-weight:700">${sec.title}</h3>
+      </div>`;
+
+    sec.items.forEach((item, ii) => {
+      const key = `${si}_${ii}`;
+      const checked = saved[key] || false;
+      totalItems++;
+      html += `
+      <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--dim)" id="ci_${key}">
+        <input type="checkbox" id="cb_${key}" ${checked?'checked':''} onchange="toggleCheck('${key}',this.checked)"
+          style="width:17px;height:17px;cursor:pointer;accent-color:var(--accent);flex-shrink:0;margin-top:2px">
+        <div style="flex:1">
+          <label for="cb_${key}" style="font-size:13px;font-weight:${checked?400:500};cursor:pointer;${checked?'text-decoration:line-through;color:var(--muted)':''}">
+            ${item.text}
+          </label>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">💡 ${item.tip}</div>
+        </div>
+      </div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  html += `</div>`;
+  el.innerHTML = html;
+
+  window._checklistTotal = totalItems;
+  updateChecklistProgress();
+}
+
+function toggleCheck(key, val) {
+  const saved = JSON.parse(localStorage.getItem('etsy_checklist')||'{}');
+  saved[key] = val;
+  localStorage.setItem('etsy_checklist', JSON.stringify(saved));
+  // Обновить стиль строки
+  const row = document.getElementById('ci_'+key);
+  const lbl = row?.querySelector('label');
+  if (lbl) {
+    lbl.style.textDecoration = val ? 'line-through' : '';
+    lbl.style.color = val ? 'var(--muted)' : '';
+    lbl.style.fontWeight = val ? 400 : 500;
+  }
+  updateChecklistProgress();
+}
+
+function updateChecklistProgress() {
+  const saved = JSON.parse(localStorage.getItem('etsy_checklist')||'{}');
+  const done  = Object.values(saved).filter(Boolean).length;
+  const total = window._checklistTotal || 30;
+  const pct   = Math.round(done/total*100);
+  const el    = document.getElementById('checklist-progress');
+  if (!el) return;
+  el.innerHTML = `
+    <span style="font-size:16px;font-weight:700;color:${pct===100?'var(--green)':pct>=50?'var(--accent2)':'var(--text)'}">
+      ${done}/${total}
+    </span>
+    <span> пунктов выполнено </span>
+    <span class="badge ${pct===100?'b-green':pct>=50?'b-yellow':'b-gray'}">${pct}%</span>
+    ${pct===100?'<span style="color:var(--green);margin-left:8px">🎉 Готово к публикации!</span>':''}
+  `;
+}
+
+function resetChecklist() {
+  if (!confirm('Сбросить весь чеклист? Прогресс будет удалён.')) return;
+  localStorage.removeItem('etsy_checklist');
+  renderLaunch();
+}
+
+// ────────────────────────────────────────
+//  📊 A/B ТЕСТ
+// ────────────────────────────────────────
+function renderAB() {
+  const el = document.getElementById('panel-ab');
+  el.innerHTML = `
+  <div class="section">
+    <div class="section-hd"><h3>📊 A/B Тест заголовков и цен</h3></div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7">
+        Введи два варианта — программа рассчитает ожидаемый результат на основе данных рынка
+        и поможет выбрать лучший вариант для твоей ниши.
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+        <div style="background:rgba(91,156,246,.06);border:1px solid rgba(91,156,246,.2);border-radius:12px;padding:16px">
+          <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">🅐 Вариант A</div>
+          <div style="margin-bottom:10px">
+            <label>Заголовок A</label>
+            <input type="text" id="ab-title-a" placeholder="Bible Study Printable PDF | Christian Journal">
+          </div>
+          <div>
+            <label>Цена A ($)</label>
+            <input type="number" id="ab-price-a" value="4.99" step="0.01">
+          </div>
+        </div>
+        <div style="background:rgba(244,98,42,.06);border:1px solid rgba(244,98,42,.2);border-radius:12px;padding:16px">
+          <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">🅑 Вариант B</div>
+          <div style="margin-bottom:10px">
+            <label>Заголовок B</label>
+            <input type="text" id="ab-title-b" placeholder="Christian Bible Study Pack | Prayer Journal Printable">
+          </div>
+          <div>
+            <label>Цена B ($)</label>
+            <input type="number" id="ab-price-b" value="6.99" step="0.01">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+        <div>
+          <label>Текущие просмотры в день (если есть)</label>
+          <input type="number" id="ab-views" value="10" placeholder="10">
+        </div>
+        <div>
+          <label>Текущая конверсия % (если знаешь)</label>
+          <input type="number" id="ab-conv" value="2" step="0.1" placeholder="2">
+        </div>
+        <div>
+          <label>Период теста (дней)</label>
+          <input type="number" id="ab-days" value="14" placeholder="14">
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="width:auto;padding:11px 28px" onclick="runABTest()">
+        📊 Рассчитать A/B тест
+      </button>
+    </div>
+
+    <div id="ab-result" style="display:none"></div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="section-hd"><h3>📚 Как правильно проводить A/B тест на Etsy</h3></div>
+      ${[
+        ['Меняй только одно', 'Тестируй либо заголовок, либо цену, либо фото — не всё сразу. Иначе не поймёшь что сработало.'],
+        ['Минимум 2 недели', 'Меньше 14 дней — результаты ненадёжны из-за случайных колебаний трафика.'],
+        ['Минимум 100 просмотров', 'До 100 просмотров на вариант результаты статистически незначимы.'],
+        ['Сравнивай конверсию', 'Главная метрика — конверсия (избранное/просмотры), а не просто просмотры.'],
+        ['Один листинг = один вариант', 'Запусти два похожих листинга с разными заголовками и сравни через 2 недели.'],
+      ].map(([t,b])=>`
+        <div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--dim)">
+          <span style="color:var(--accent2);font-weight:700;white-space:nowrap;font-size:13px;min-width:150px">${t}</span>
+          <span style="font-size:13px;color:var(--muted)">${b}</span>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+function runABTest() {
+  const titleA = document.getElementById('ab-title-a').value.trim() || 'Вариант A';
+  const titleB = document.getElementById('ab-title-b').value.trim() || 'Вариант B';
+  const priceA = parseFloat(document.getElementById('ab-price-a').value) || 4.99;
+  const priceB = parseFloat(document.getElementById('ab-price-b').value) || 6.99;
+  const views  = parseFloat(document.getElementById('ab-views').value) || 10;
+  const conv   = parseFloat(document.getElementById('ab-conv').value) || 2;
+  const days   = parseFloat(document.getElementById('ab-days').value) || 14;
+
+  const allMarket = Object.values(S.markets).flat();
+  const mktAvg    = allMarket.length ? avgPrice(allMarket) : 5;
+  const mktConv   = allMarket.length
+    ? allMarket.filter(l=>l.views>50).reduce((s,l)=>s+convOf(l),0) / Math.max(allMarket.filter(l=>l.views>50).length,1)
+    : 2;
+
+  // Оценка заголовков
+  function scoreTitle(t) {
+    let s = 0, notes = [];
+    const words = t.toLowerCase().split(/\s+/);
+    const compTags = allMarket.flatMap(l=>l.tags||[]).map(x=>x.toLowerCase());
+    const tagFreq  = freqMap(compTags);
+    // Длина
+    if (t.length >= 60 && t.length <= 130) { s += 25; } else { notes.push(t.length < 60 ? 'Короткий' : 'Длинный'); }
+    // Разделители
+    if (t.includes('|') || t.includes('-') || t.includes(',')) { s += 15; notes.push('Есть разделители ✓'); }
+    // Ключевые слова из рынка
+    const kwMatches = words.filter(w => w.length > 3 && (tagFreq[w] || 0) > 2).length;
+    s += Math.min(kwMatches * 10, 40);
+    if (kwMatches > 0) notes.push(`${kwMatches} ключевых слов из топа ✓`);
+    // «Instant download» / «Printable»
+    if (/instant download|printable|pdf/i.test(t)) { s += 15; notes.push('Есть формат ✓'); }
+    return { score: Math.min(s, 100), notes };
+  }
+
+  const sA = scoreTitle(titleA);
+  const sB = scoreTitle(titleB);
+
+  // Прогноз конверсии
+  const convA = conv * (sA.score / 70);
+  const convB = conv * (sB.score / 70);
+
+  // Ценовой коэффициент (ближе к медиане рынка = лучше)
+  const pCoeffA = 1 - Math.min(Math.abs(priceA - mktAvg) / mktAvg, 0.4);
+  const pCoeffB = 1 - Math.min(Math.abs(priceB - mktAvg) / mktAvg, 0.4);
+
+  // Ожидаемые продажи за период теста
+  const totalViews = views * days;
+  const salesA = Math.round(totalViews * (convA / 100) * pCoeffA);
+  const salesB = Math.round(totalViews * (convB / 100) * pCoeffB);
+  const revenueA = salesA * (priceA - priceA * 0.065 - priceA * 0.03 - 0.25);
+  const revenueB = salesB * (priceB - priceB * 0.065 - priceB * 0.03 - 0.25);
+
+  const winner = revenueA >= revenueB ? 'A' : 'B';
+  const winTitle = winner === 'A' ? titleA : titleB;
+  const winColor = winner === 'A' ? 'var(--blue)' : 'var(--accent)';
+
+  const el = document.getElementById('ab-result');
+  el.style.display = 'block';
+  el.innerHTML = `
+  <div class="card" style="border-color:${winColor};margin-bottom:14px">
+    <div style="font-size:14px;font-weight:700;color:${winColor};margin-bottom:16px">
+      🏆 Прогноз: побеждает вариант ${winner} — «${clip(winTitle, 50)}»
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      ${['A','B'].map(v=>{
+        const isWin = v === winner;
+        const score = v==='A' ? sA : sB;
+        const title = v==='A' ? titleA : titleB;
+        const price = v==='A' ? priceA : priceB;
+        const sales = v==='A' ? salesA : salesB;
+        const rev   = v==='A' ? revenueA : revenueB;
+        const cv    = v==='A' ? convA : convB;
+        const color = v==='A' ? 'var(--blue)' : 'var(--accent)';
+        return `
+        <div style="background:rgba(${v==='A'?'91,156,246':'244,98,42'},.06);border:1px solid rgba(${v==='A'?'91,156,246':'244,98,42'},.2);border-radius:12px;padding:14px">
+          <div style="font-size:12px;font-weight:700;color:${color};margin-bottom:10px">
+            🅐${v==='B'?'':''}${v==='B'?'Вариант B':'Вариант A'} ${isWin?'✓ ПОБЕДИТЕЛЬ':''}
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5">${clip(title,60)}</div>
+          ${[
+            ['Цена', '$'+price.toFixed(2)],
+            ['SEO оценка заголовка', score.score+'/100'],
+            ['Ожид. конверсия', cv.toFixed(1)+'%'],
+            ['Ожид. продаж за '+days+'д', sales+' шт.'],
+            ['Ожид. чистая выручка', '$'+rev.toFixed(2)],
+          ].map(([l,v2])=>`
+            <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--dim)">
+              <span style="color:var(--muted)">${l}</span>
+              <span style="font-weight:600">${v2}</span>
+            </div>
+          `).join('')}
+          <div style="margin-top:10px;font-size:11px;color:var(--muted)">${score.notes.join(' · ')}</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div style="background:var(--card);border-radius:10px;padding:14px;font-size:13px;color:var(--muted);line-height:1.7">
+      <strong style="color:var(--text)">💡 Рекомендация:</strong><br>
+      ${revenueA === revenueB
+        ? 'Варианты примерно равны. Протестируй оба реально — запусти два листинга и сравни через 14 дней.'
+        : `Вариант ${winner} прогнозируется лучше по чистой выручке (+$${Math.abs(revenueA-revenueB).toFixed(2)} за ${days} дней).
+          ${Math.abs(priceA-priceB) > 1 ? ` Цена $${(winner==='A'?priceA:priceB).toFixed(2)} ближе к рыночной медиане $${mktAvg.toFixed(2)}.` : ''}
+          Запусти оба варианта как отдельные листинги и проверь реальные данные через 2 недели.`
+      }
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-hd"><h3>📅 План проведения теста</h3></div>
+    ${[
+      ['День 1', 'Опубликуй оба листинга одновременно', 'var(--blue)'],
+      ['Дни 1-3', 'Запусти Etsy Ads $1/день на каждый листинг для равного трафика', 'var(--accent2)'],
+      ['День 7', 'Первая проверка — смотри только на просмотры (не делай выводов)', 'var(--muted)'],
+      ['День 14', 'Итоговое сравнение: конверсия (избр/просм), продажи, выручка', 'var(--green)'],
+      ['После теста', 'Оставь победителя, у проигравшего обнови заголовок и тестируй снова', 'var(--purple)'],
+    ].map(([d,t,c])=>`
+      <div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--dim);align-items:flex-start">
+        <span style="color:${c};font-weight:700;font-size:12px;white-space:nowrap;min-width:70px">${d}</span>
+        <span style="font-size:13px;color:var(--muted)">${t}</span>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+// ────────────────────────────────────────
+//  🎯 ПОИСК НЕЗАНЯТЫХ НИШ
+// ────────────────────────────────────────
+function renderNiches() {
+  const el = document.getElementById('panel-niches');
+  const allMarket = Object.values(S.markets).flat();
+
+  // Генерируем поисковые подсказки на основе тегов конкурентов
+  const compTags   = allMarket.flatMap(l => l.tags||[]).map(t=>t.toLowerCase());
+  const tagFreq    = freqMap(compTags);
+  const topTags    = Object.entries(tagFreq).sort((a,b)=>b[1]-a[1]);
+  const myTagSet   = new Set(S.myListings.flatMap(l=>l.tags||[]).map(t=>t.toLowerCase()));
+
+  // Анализ насыщенности по каждому ключевому слову в рынке
+  const kwAnalysis = Object.entries(S.markets).map(([kw, listings]) => {
+    const prices  = listings.map(priceOf).filter(p=>p>0);
+    const avgP    = prices.length ? prices.reduce((a,b)=>a+b,0)/prices.length : 0;
+    const avgFavs = listings.reduce((s,l)=>s+(l.num_favorers||0),0) / Math.max(listings.length,1);
+    const avgConv = listings.filter(l=>l.views>20).reduce((s,l)=>s+convOf(l),0) / Math.max(listings.filter(l=>l.views>20).length,1);
+    // Насыщенность = много листингов + мало избранного = высокая конкуренция, мало спроса
+    const saturation = listings.length >= 50 ? 'высокая' : listings.length >= 25 ? 'средняя' : 'низкая';
+    const demand     = avgFavs >= 50 ? 'высокий' : avgFavs >= 15 ? 'средний' : 'низкий';
+    const opportunity = (demand === 'высокий' && saturation === 'низкая') ? 'отличная' :
+                        (demand === 'высокий' && saturation === 'средняя') ? 'хорошая' :
+                        (demand === 'средний' && saturation === 'низкая') ? 'хорошая' : 'низкая';
+    return { kw, listings: listings.length, avgP, avgFavs: Math.round(avgFavs), avgConv: avgConv.toFixed(1), saturation, demand, opportunity };
+  });
+
+  // Подниши — берём редкие теги с хорошим избранным у листингов которые их используют
+  const subNiches = topTags
+    .filter(([t, cnt]) => cnt >= 3 && cnt <= 15 && !myTagSet.has(t) && t.split(' ').length >= 2)
+    .map(([tag, cnt]) => {
+      const tagListings = allMarket.filter(l => (l.tags||[]).map(x=>x.toLowerCase()).includes(tag));
+      const avgFavs = tagListings.reduce((s,l)=>s+(l.num_favorers||0),0) / Math.max(tagListings.length,1);
+      const avgP    = avgPrice(tagListings);
+      return { tag, cnt, avgFavs: Math.round(avgFavs), avgP, score: Math.round(avgFavs * 10 / cnt) };
+    })
+    .sort((a,b) => b.score - a.score)
+    .slice(0, 20);
+
+  // Ценовые пробелы — сегменты где мало конкурентов но есть спрос
+  const priceRanges = [
+    {label:'До $3',    min:0,  max:3},
+    {label:'$3–$5',    min:3,  max:5},
+    {label:'$5–$8',    min:5,  max:8},
+    {label:'$8–$12',   min:8,  max:12},
+    {label:'$12–$20',  min:12, max:20},
+    {label:'$20–$35',  min:20, max:35},
+    {label:'$35+',     min:35, max:9999},
+  ].map(r => {
+    const inRange = allMarket.filter(l => { const p=priceOf(l); return p>=r.min&&p<r.max; });
+    const avgFavs = inRange.length ? inRange.reduce((s,l)=>s+(l.num_favorers||0),0)/inRange.length : 0;
+    return { ...r, count: inRange.length, avgFavs: Math.round(avgFavs),
+      gap: inRange.length < 5 && avgFavs > 10 };
+  });
+
+  el.innerHTML = `
+  <div class="section">
+    <div class="section-hd"><h3>🎯 Анализ насыщенности по твоим ключевым словам</h3></div>
+    ${kwAnalysis.length ? `
+    <div class="card" style="margin-bottom:14px">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Ключевое слово</th><th>Листингов в топе</th><th>Ср. избранное</th><th>Ср. конверсия</th><th>Насыщенность</th><th>Спрос</th><th>Возможность</th></tr></thead>
+          <tbody>
+            ${kwAnalysis.map(k=>`<tr>
+              <td style="font-weight:600">${k.kw}</td>
+              <td>${k.listings}</td>
+              <td>★ ${k.avgFavs}</td>
+              <td>${k.avgConv}%</td>
+              <td><span class="badge ${k.saturation==='низкая'?'b-green':k.saturation==='средняя'?'b-yellow':'b-red'}">${k.saturation}</span></td>
+              <td><span class="badge ${k.demand==='высокий'?'b-green':k.demand==='средний'?'b-yellow':'b-gray'}">${k.demand}</span></td>
+              <td><span class="badge ${k.opportunity==='отличная'?'b-green':k.opportunity==='хорошая'?'b-yellow':'b-gray'}">${k.opportunity}</span></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>` : '<div class="card"><div class="empty">Добавь ключевые слова в настройках</div></div>'}
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>💎 Подниши с низкой конкуренцией и высоким спросом</h3></div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
+        Теги которые используют 3-15 конкурентов (низкая конкуренция), но листинги с ними имеют высокое избранное (высокий спрос).
+        Нажми на тег чтобы скопировать.
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Тег / подниша</th><th>Конкурентов</th><th>Ср. избранное</th><th>Ср. цена</th><th>Потенциал</th></tr></thead>
+          <tbody>
+            ${subNiches.map(n=>`<tr>
+              <td>
+                <span class="tag tag-new" onclick="copyText('${n.tag}')" style="cursor:pointer">${n.tag}</span>
+              </td>
+              <td><span class="badge b-green">${n.cnt} (низко)</span></td>
+              <td>★ ${n.avgFavs}</td>
+              <td>$${n.avgP.toFixed(2)}</td>
+              <td>
+                <div class="conv-bar-wrap">
+                  <div class="conv-track"><div class="conv-fill-bar" style="width:${Math.min(n.score,100)}%;background:${n.score>50?'var(--green)':n.score>20?'var(--accent2)':'var(--muted)'}"></div></div>
+                  <span style="font-size:11px;color:var(--muted)">${n.score}</span>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>💰 Ценовые пробелы на рынке</h3></div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
+        Ищем ценовые сегменты где мало конкурентов, но у имеющихся листингов высокое избранное — значит спрос есть.
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Диапазон цен</th><th>Листингов в топе</th><th>Ср. избранное</th><th>Статус</th></tr></thead>
+          <tbody>
+            ${priceRanges.map(r=>`<tr>
+              <td style="font-weight:600">${r.label}</td>
+              <td>${r.count}</td>
+              <td>★ ${r.avgFavs}</td>
+              <td>${r.gap
+                ? '<span class="badge b-green">💎 Возможность — мало конкурентов!</span>'
+                : r.count < 10
+                  ? '<span class="badge b-yellow">Небольшая конкуренция</span>'
+                  : '<span class="badge b-gray">Насыщен</span>'
+              }</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🗺 Карта возможностей</h3></div>
+    <div class="card-grid card-grid-2">
+      <div class="opp-card">
+        <div class="opp-title">🟢 Войти сейчас</div>
+        <div class="opp-body">
+          Подниши с оценкой потенциала выше 40 и менее 10 конкурентов — это окна возможностей.
+          Создай листинг, добавь эти теги и займи место пока конкуренция низкая.
+        </div>
+      </div>
+      <div class="opp-card" style="border-color:rgba(255,179,71,.2);background:linear-gradient(135deg,rgba(255,179,71,.06),rgba(244,98,42,.04))">
+        <div class="opp-title" style="color:var(--accent2)">⚡ Стратегия первопроходца</div>
+        <div class="opp-body">
+          Etsy даёт преимущество первым листингам в нише — они накапливают избранное и отзывы
+          пока конкурентов мало. Потом занять их место становится гораздо труднее.
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ────────────────────────────────────────
+//  📦 BUNDLE СТРАТЕГИЯ
+// ────────────────────────────────────────
+function renderBundle() {
+  const el = document.getElementById('panel-bundle');
+  const ls = S.myListings;
+  const allMarket = Object.values(S.markets).flat();
+
+  // Найти bundle листинги у конкурентов
+  const bundleKeywords = ['bundle','pack','set','collection','kit','series','complete','all in one','mega'];
+  const competitorBundles = allMarket.filter(l =>
+    bundleKeywords.some(kw => (l.title||'').toLowerCase().includes(kw))
+  ).sort((a,b)=>(b.num_favorers||0)-(a.num_favorers||0));
+
+  const bundlePrices = competitorBundles.map(priceOf).filter(p=>p>0);
+  const avgBundleP   = bundlePrices.length ? bundlePrices.reduce((a,b)=>a+b,0)/bundlePrices.length : 0;
+  const myAvgP       = avgPrice(ls);
+  const suggestedBundlePrice = myAvgP * 2.5; // типичный bundle = 2.5x от одного товара
+
+  // Мои листинги сгруппированные по схожести тегов
+  const tagGroups = {};
+  ls.forEach(l => {
+    (l.tags||[]).forEach(tag => {
+      if (!tagGroups[tag]) tagGroups[tag] = [];
+      tagGroups[tag].push(l);
+    });
+  });
+  const goodGroups = Object.entries(tagGroups)
+    .filter(([,ls]) => ls.length >= 2 && ls.length <= 6)
+    .sort((a,b) => b[1].length - a[1].length)
+    .slice(0, 6);
+
+  el.innerHTML = `
+  <div class="section">
+    <div class="section-hd"><h3>📦 Bundle-стратегия для твоего магазина</h3></div>
+    <div class="card-grid card-grid-3" style="margin-bottom:14px">
+      ${miniMetric(competitorBundles.length, 'Bundle-листингов у конкурентов')}
+      ${miniMetric(avgBundleP > 0 ? '$'+avgBundleP.toFixed(2) : '—', 'Средняя цена bundle')}
+      ${miniMetric('$'+suggestedBundlePrice.toFixed(2), 'Рекомендованная цена для тебя')}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>💡 Рекомендованные bundle для твоего магазина</h3></div>
+    ${goodGroups.length ? goodGroups.map(([tag, tagLs]) => {
+      const totalPrice  = tagLs.reduce((s,l)=>s+priceOf(l),0);
+      const bundlePrice = Math.round(totalPrice * 0.75 * 20) / 20; // 25% скидка
+      const saving      = totalPrice - bundlePrice;
+      return `
+      <div class="card" style="margin-bottom:12px;border-left:3px solid var(--accent2)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-size:14px;font-weight:700;margin-bottom:4px">Bundle: «${tag}»</div>
+            <div style="font-size:12px;color:var(--muted)">${tagLs.length} товаров · покупатель экономит $${saving.toFixed(2)}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:var(--muted);text-decoration:line-through">$${totalPrice.toFixed(2)}</div>
+            <div style="font-size:20px;font-weight:800;color:var(--green)">$${bundlePrice.toFixed(2)}</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${tagLs.map(l=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:5px 8px;background:var(--card);border-radius:7px">
+              <span style="color:var(--muted)">${clip(l.title,45)}</span>
+              <span style="font-weight:600;color:var(--accent2)">$${priceOf(l).toFixed(2)}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--dim)">
+          <div style="font-size:12px;color:var(--muted)">
+            💡 Заголовок bundle: <span style="color:var(--text);font-weight:600">«${tag.split(' ').map(w=>w[0]?.toUpperCase()+w.slice(1)).join(' ')} Bundle | ${tagLs.length}-in-1 Printable Pack | Instant Download»</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('') : `
+    <div class="card">
+      <div class="empty">
+        Загрузи листинги магазина — программа автоматически найдёт товары которые хорошо объединяются в bundle.
+      </div>
+    </div>`}
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🏆 Популярные bundle у конкурентов</h3></div>
+    <div class="card" style="margin-bottom:14px">
+      ${competitorBundles.length ? competitorBundles.slice(0,10).map((l,i)=>listingItem(l,i+1)).join('')
+        : '<div class="empty">Нет данных — добавь ключевые слова и запусти анализ</div>'}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>📐 Формулы ценообразования bundle</h3></div>
+    <div class="card">
+      ${[
+        ['Скидка 20-30%', 'Если 3 товара по $5 = $15, bundle за $10.50-12. Покупатель видит ценность, ты зарабатываешь на объёме.', 'var(--green)'],
+        ['Anchor pricing', 'Покажи зачёркнутую цену «Обычно $15, сейчас $9.99». Повышает воспринимаемую ценность.', 'var(--blue)'],
+        ['Threshold цена', 'Оканчивай на .99 или .97 для дешёвых, на .00 для премиум. $4.99 кажется намного дешевле $5.', 'var(--accent2)'],
+        ['Bundle = 2.5x', 'Средний bundle у конкурентов стоит в 2-3 раза дороже одного товара. Целься в этот диапазон.', 'var(--purple)'],
+      ].map(([t,b,c])=>`
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--dim);align-items:flex-start">
+          <div style="width:4px;background:${c};border-radius:99px;align-self:stretch;flex-shrink:0"></div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:${c};margin-bottom:3px">${t}</div>
+            <div style="font-size:13px;color:var(--muted)">${b}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+// ────────────────────────────────────────
+//  🖨 PDF ОТЧЁТ
+// ────────────────────────────────────────
+function renderReport() {
+  const el = document.getElementById('panel-report');
+  el.innerHTML = `
+  <div class="section">
+    <div class="section-hd"><h3>🖨 Экспорт отчёта</h3></div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7">
+        Сгенерируй красивый отчёт для печати или архива. Открывается в новой вкладке — используй
+        <strong style="color:var(--text)">Ctrl+P / Cmd+P</strong> чтобы распечатать или сохранить как PDF.
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" style="background:var(--accent);color:#fff;padding:12px 24px;font-size:14px" onclick="generatePDFReport('full')">
+          🖨 Полный отчёт (все данные)
+        </button>
+        <button class="btn" style="background:var(--dim);color:var(--text);padding:12px 24px" onclick="generatePDFReport('summary')">
+          📋 Краткий отчёт (1 страница)
+        </button>
+        <button class="btn" style="background:rgba(61,214,140,.15);color:var(--green);padding:12px 24px" onclick="generatePDFReport('competitors')">
+          🏆 Только конкуренты
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-hd"><h3>📋 Предпросмотр содержания отчёта</h3></div>
+      ${[
+        ['📊 Страница 1', 'Обложка — название магазина, дата, ключевые метрики'],
+        ['📈 Страница 2', 'Сводная статистика — продажи, конверсия, SEO оценка, сравнение с рынком'],
+        ['🏆 Страница 3', 'Топ-10 листингов по просмотрам с метриками'],
+        ['⚠️ Страница 4', 'SEO проблемы — листинги требующие улучшения'],
+        ['🔎 Страница 5', 'Анализ рынка — цены конкурентов, топ листинги'],
+        ['🏷 Страница 6', 'Теги — мои vs конкурентов, что добавить'],
+        ['💡 Страница 7', 'Рекомендации и план действий'],
+      ].map(([p,d])=>`
+        <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--dim);font-size:13px">
+          <span style="color:var(--accent2);font-weight:600;min-width:100px">${p}</span>
+          <span style="color:var(--muted)">${d}</span>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+function generatePDFReport(type) {
+  if (!S.shop) { alert('Сначала запусти анализ!'); return; }
+
+  const sh      = S.shop;
+  const ls      = S.myListings;
+  const allMkt  = Object.values(S.markets).flat();
+  const date    = new Date().toLocaleDateString('ru');
+
+  const totalViews = ls.reduce((s,l)=>s+(l.views||0),0);
+  const totalFavs  = ls.reduce((s,l)=>s+(l.num_favorers||0),0);
+  const conv       = totalViews > 0 ? (totalFavs/totalViews*100).toFixed(1) : '0';
+  const myAvgP     = avgPrice(ls);
+  const mktAvgP    = allMkt.length ? avgPrice(allMkt) : 0;
+  const seoScore   = calcSeoScore(ls);
+  const top10      = [...ls].sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,10);
+  const problems   = ls.filter(l=>hasSeoIssues(l)).slice(0,10);
+  const compTags   = allMkt.flatMap(l=>l.tags||[]).map(t=>t.toLowerCase());
+  const myTagSet   = new Set(ls.flatMap(l=>l.tags||[]).map(t=>t.toLowerCase()));
+  const missingTags= Object.entries(freqMap(compTags)).sort((a,b)=>b[1]-a[1])
+    .filter(([t])=>!myTagSet.has(t)).slice(0,20).map(([t])=>t);
+  const recs       = buildRecs(sh, ls, conv, allMkt.length ? {avg_price: mktAvgP} : null);
+
+  const css = `
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',sans-serif;color:#1C1C1C;background:#fff;font-size:13px;line-height:1.6}
+    .page{max-width:800px;margin:0 auto;padding:32px 40px}
+    @media print{.page{padding:20px 28px}.no-print{display:none!important}@page{margin:1.5cm}}
+    h1{font-size:28px;font-weight:800;color:#1C1C1C}
+    h2{font-size:16px;font-weight:700;margin:24px 0 12px;color:#1C1C1C;border-bottom:2px solid #F4622A;padding-bottom:6px}
+    h3{font-size:13px;font-weight:700;margin-bottom:8px}
+    .cover{background:linear-gradient(135deg,#1A1A22,#2A2A38);color:#fff;padding:48px 40px;border-radius:16px;margin-bottom:28px}
+    .cover h1{color:#fff;margin-bottom:8px}
+    .cover .sub{color:#8884A0;font-size:14px}
+    .cover .date{color:#FFB347;font-size:12px;margin-top:16px}
+    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+    .m{background:#F5F5F8;border-radius:10px;padding:14px}
+    .m .v{font-size:22px;font-weight:800;color:#F4622A}
+    .m .l{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px}
+    th{background:#F5F5F8;padding:8px 10px;text-align:left;font-size:11px;color:#888;text-transform:uppercase}
+    td{padding:8px 10px;border-bottom:1px solid #EEE}
+    tr:last-child td{border-bottom:none}
+    .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+    .bg{background:#E8F5EE;color:#1A6B3A}
+    .by{background:#FFF3D6;color:#8A5A00}
+    .br{background:#FDECEA;color:#A0251E}
+    .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .tag{background:#FFF3E8;color:#C25A00;padding:3px 10px;border-radius:99px;font-size:11px}
+    .tag-new{background:#E8F5EE;color:#1A6B3A;border:1px dashed #5CB87A}
+    .rec{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #EEE}
+    .rec-icon{font-size:18px;flex-shrink:0}
+    .rec-title{font-weight:700;font-size:13px;margin-bottom:2px}
+    .rec-body{font-size:12px;color:#666}
+    .section-break{border:none;border-top:1px solid #E0E0E0;margin:28px 0}
+    .print-btn{position:fixed;bottom:24px;right:24px;background:#F4622A;color:#fff;border:none;padding:14px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(244,98,42,.4)}
+  `;
+
+  let body = `
+  <div class="cover">
+    <h1>📊 Etsy Shop Report</h1>
+    <div class="sub">${sh.shop_name} · Анализ магазина и рынка</div>
+    <div class="date">Дата отчёта: ${date}</div>
+  </div>`;
+
+  if (type === 'summary' || type === 'full') {
+    body += `
+    <h2>Ключевые метрики</h2>
+    <div class="metrics">
+      <div class="m"><div class="v">${sh.transaction_sold_count||0}</div><div class="l">Продаж всего</div></div>
+      <div class="m"><div class="v">${ls.length}</div><div class="l">Листингов</div></div>
+      <div class="m"><div class="v">${conv}%</div><div class="l">Конверсия</div></div>
+      <div class="m"><div class="v">$${myAvgP.toFixed(2)}</div><div class="l">Средняя цена</div></div>
+    </div>
+    <div class="metrics">
+      <div class="m"><div class="v">${sh.review_average?.toFixed(1)||'—'}★</div><div class="l">Рейтинг</div></div>
+      <div class="m"><div class="v">${sh.review_count||0}</div><div class="l">Отзывов</div></div>
+      <div class="m"><div class="v">${seoScore}/100</div><div class="l">SEO оценка</div></div>
+      <div class="m"><div class="v">${mktAvgP>0?'$'+mktAvgP.toFixed(2):'—'}</div><div class="l">Ср. цена рынка</div></div>
+    </div>`;
+  }
+
+  if (type === 'full' || type === 'summary') {
+    body += `
+    <hr class="section-break">
+    <h2>Топ-10 листингов по просмотрам</h2>
+    <table>
+      <thead><tr><th>#</th><th>Название</th><th>Просмотры</th><th>★</th><th>Конверсия</th><th>Цена</th></tr></thead>
+      <tbody>
+        ${top10.map((l,i)=>`<tr>
+          <td>${i+1}</td>
+          <td>${clip(l.title,50)}</td>
+          <td>${(l.views||0).toLocaleString()}</td>
+          <td>${l.num_favorers||0}</td>
+          <td><span class="badge ${convOf(l)>=3?'bg':convOf(l)>=1?'by':'br'}">${convOf(l).toFixed(1)}%</span></td>
+          <td>$${priceOf(l).toFixed(2)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  if (type === 'full' && problems.length) {
+    body += `
+    <hr class="section-break">
+    <h2>⚠️ Листинги требующие улучшения SEO</h2>
+    <table>
+      <thead><tr><th>Название</th><th>Теги</th><th>Фото</th><th>Заголовок</th></tr></thead>
+      <tbody>
+        ${problems.map(l=>`<tr>
+          <td>${clip(l.title,45)}</td>
+          <td><span class="badge ${(l.tags||[]).length<13?'by':'bg'}">${(l.tags||[]).length}/13</span></td>
+          <td><span class="badge ${(l.images||[]).length<5?'by':'bg'}">${(l.images||[]).length}/10</span></td>
+          <td><span class="badge ${(l.title||'').length<40?'by':'bg'}">${(l.title||'').length} симв.</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  if ((type === 'full' || type === 'competitors') && allMkt.length) {
+    const topComp = [...allMkt].sort((a,b)=>(b.num_favorers||0)-(a.num_favorers||0)).slice(0,8);
+    body += `
+    <hr class="section-break">
+    <h2>🏆 Топ конкуренты</h2>
+    <table>
+      <thead><tr><th>#</th><th>Листинг</th><th>Магазин</th><th>★ Избр.</th><th>Цена</th></tr></thead>
+      <tbody>
+        ${topComp.map((l,i)=>`<tr>
+          <td>${i+1}</td>
+          <td>${clip(l.title,45)}</td>
+          <td>${l.shop?.shop_name||'—'}</td>
+          <td>${l.num_favorers||0}</td>
+          <td>$${priceOf(l).toFixed(2)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  if (type === 'full' && missingTags.length) {
+    body += `
+    <hr class="section-break">
+    <h2>🏷 Теги конкурентов которых нет у тебя</h2>
+    <div class="tags">
+      ${missingTags.map(t=>`<span class="tag tag-new">+ ${t}</span>`).join('')}
+    </div>`;
+  }
+
+  if (type === 'full' || type === 'summary') {
+    body += `
+    <hr class="section-break">
+    <h2>💡 Рекомендации</h2>
+    ${recs.map(r=>`
+      <div class="rec">
+        <div class="rec-icon">${r.icon}</div>
+        <div><div class="rec-title">${r.title}</div><div class="rec-body">${r.body}</div></div>
+      </div>
+    `).join('')}`;
+  }
+
+  const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
+    <title>Etsy Report — ${sh.shop_name}</title>
+    <style>${css}</style>
+  </head><body>
+    <button class="print-btn no-print" onclick="window.print()">🖨 Распечатать / Сохранить PDF</button>
+    <div class="page">${body}</div>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+// ────────────────────────────────────────
+//  💬 АНАЛИЗ ОТЗЫВОВ КОНКУРЕНТОВ
+// ────────────────────────────────────────
+function renderReviews() {
+  const el = document.getElementById('panel-reviews');
+  const allMarket = Object.values(S.markets).flat();
+
+  // Etsy API v3 не возвращает текст отзывов в публичном поиске листингов,
+  // поэтому делаем умный анализ на основе тегов, избранного и структуры листингов
+
+  // Паттерны жалоб — определяем по косвенным признакам
+  const lowConvHighViews = allMarket.filter(l => l.views > 200 && convOf(l) < 1);
+  const highFavsLowSales = allMarket.filter(l => (l.num_favorers||0) > 50 && (l.views||0) < 100);
+  const fewImages = allMarket.filter(l => (l.images||[]).length < 4);
+  const shortDesc  = allMarket.filter(l => (l.description||'').length < 100);
+
+  // Топ листинги с лучшим соотношением — что делают правильно
+  const topPerformers = [...allMarket]
+    .filter(l => (l.views||0) > 100)
+    .sort((a,b) => convOf(b) - convOf(a))
+    .slice(0, 10);
+
+  // Анализ тегов у лучших vs худших
+  const worstListings = [...allMarket]
+    .filter(l => (l.views||0) > 50)
+    .sort((a,b) => convOf(a) - convOf(b))
+    .slice(0, 10);
+
+  const bestTags  = freqMap(topPerformers.flatMap(l => l.tags||[]));
+  const worstTags = freqMap(worstListings.flatMap(l => l.tags||[]));
+  const bestOnlyTags = Object.entries(bestTags)
+    .filter(([t]) => !worstTags[t])
+    .sort((a,b) => b[1]-a[1]).slice(0,15);
+
+  // Ценовые паттерны: дешёвые vs дорогие — где лучше конверсия
+  const priceGroups = [
+    { label: 'До $3',   items: allMarket.filter(l => priceOf(l) < 3) },
+    { label: '$3–$7',   items: allMarket.filter(l => priceOf(l) >= 3 && priceOf(l) < 7) },
+    { label: '$7–$15',  items: allMarket.filter(l => priceOf(l) >= 7 && priceOf(l) < 15) },
+    { label: '$15–$30', items: allMarket.filter(l => priceOf(l) >= 15 && priceOf(l) < 30) },
+    { label: '$30+',    items: allMarket.filter(l => priceOf(l) >= 30) },
+  ].map(g => ({
+    ...g,
+    count: g.items.length,
+    avgConv: g.items.filter(l=>l.views>20).length
+      ? g.items.filter(l=>l.views>20).reduce((s,l)=>s+convOf(l),0) / g.items.filter(l=>l.views>20).length
+      : 0,
+    avgFavs: g.items.length
+      ? g.items.reduce((s,l)=>s+(l.num_favorers||0),0) / g.items.length
+      : 0,
+  }));
+
+  // Типичные жалобы покупателей на цифровые товары Etsy (база знаний)
+  const commonComplaints = [
+    { icon: '📄', issue: 'Нет инструкции по скачиванию', freq: 'Очень часто', fix: 'Добавь в описание раздел «How to Download» с пошаговыми инструкциями' },
+    { icon: '🖨', issue: 'Файл не печатается правильно', freq: 'Часто', fix: 'Укажи точный размер (US Letter / A4), рекомендуемые настройки печати' },
+    { icon: '🎨', issue: 'Цвета выглядят иначе при печати', freq: 'Часто', fix: 'Предупреди что экранные и печатные цвета могут отличаться, используй CMYK' },
+    { icon: '📁', issue: 'Не могут найти файл после скачивания', freq: 'Средне', fix: 'Объясни что файл приходит на email и через раздел Purchases на Etsy' },
+    { icon: '✂️', issue: 'Размер не подходит для их принтера', freq: 'Средне', fix: 'Предложи оба формата US Letter и A4, или опцию «scale to fit»' },
+    { icon: '🔤', issue: 'Шрифт не читается при печати', freq: 'Редко', fix: 'Тестируй печать сам, используй размер шрифта минимум 10pt' },
+    { icon: '📦', issue: 'Ожидали физический товар', freq: 'Редко', fix: 'Слово DIGITAL/PRINTABLE/INSTANT DOWNLOAD должно быть в заголовке' },
+  ];
+
+  el.innerHTML = `
+  <div class="section">
+    <div class="section-hd"><h3>💬 Анализ паттернов покупательского поведения</h3></div>
+    <div class="hint-box" style="margin-bottom:16px">
+      Etsy API не предоставляет тексты отзывов через открытый доступ. Вместо этого программа
+      анализирует косвенные сигналы: конверсию, избранное, структуру листингов и паттерны топ-исполнителей.
+    </div>
+
+    <div class="card-grid card-grid-3" style="margin-bottom:14px">
+      ${miniMetric(lowConvHighViews.length, 'Листингов с низкой конверсией при высоких просмотрах')}
+      ${miniMetric(fewImages.length, 'Листингов с менее чем 4 фото')}
+      ${miniMetric(shortDesc.length, 'Листингов с коротким описанием')}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>⭐ Что делают лучшие листинги иначе</h3></div>
+    <div class="card-grid card-grid-2" style="margin-bottom:14px">
+      <div class="card">
+        <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:12px">
+          ✓ Теги только у топ-конвертеров
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+          Эти теги встречаются у листингов с высокой конверсией, но не у слабых:
+        </div>
+        <div class="tags">
+          ${bestOnlyTags.map(([t,c]) => `
+            <span class="tag tag-new" onclick="copyText('${t}')" title="${c} листингов">${t}</span>
+          `).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:12px">
+          📊 Конверсия по ценовым сегментам
+        </div>
+        ${priceGroups.filter(g=>g.count>0).map(g => `
+          <div class="bar-row">
+            <div class="bar-label">
+              <span>${g.label} (${g.count} шт.)</span>
+              <span style="color:${g.avgConv>=3?'var(--green)':g.avgConv>=1?'var(--accent2)':'var(--red)'}">
+                ${g.avgConv.toFixed(1)}% · ★${g.avgFavs.toFixed(0)}
+              </span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${Math.min(g.avgConv*20,100)}%;
+                background:${g.avgConv>=3?'var(--green)':g.avgConv>=1?'var(--accent2)':'var(--red)'}">
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>⚠️ Типичные жалобы покупателей на цифровые товары</h3></div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
+        База знаний по самым частым проблемам покупателей цифровых PDF товаров на Etsy:
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Проблема</th><th>Частота</th><th>Как исправить</th></tr></thead>
+          <tbody>
+            ${commonComplaints.map(c => `<tr>
+              <td><span style="margin-right:6px">${c.icon}</span>${c.issue}</td>
+              <td><span class="badge ${c.freq==='Очень часто'?'b-red':c.freq==='Часто'?'b-yellow':'b-gray'}">
+                ${c.freq}
+              </span></td>
+              <td style="color:var(--muted);font-size:12px">${c.fix}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>🏆 Топ листинги конкурентов с лучшей конверсией</h3></div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+        Листинги с наилучшим соотношением просмотров к избранному — изучи их структуру:
+      </div>
+      ${topPerformers.slice(0,8).map((l,i) => `
+        <div class="listing-item">
+          <div class="listing-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</div>
+          <div class="listing-body">
+            <div class="listing-title">${clip(l.title,55)}</div>
+            <div class="listing-meta">
+              <span>👁 ${(l.views||0).toLocaleString()}</span>
+              <span>★ ${l.num_favorers||0}</span>
+              <span class="badge b-green">${convOf(l).toFixed(1)}% конв.</span>
+              <span>🏪 ${l.shop?.shop_name||'—'}</span>
+            </div>
+          </div>
+          <div class="listing-price">$${priceOf(l).toFixed(2)}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+// ────────────────────────────────────────
+//  📅 КАЛЕНДАРЬ КОНТЕНТА
+// ────────────────────────────────────────
+function renderCalendar() {
+  const el = document.getElementById('panel-calendar');
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь',
+                      'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+  // Загрузить сохранённые задачи
+  const saved = JSON.parse(localStorage.getItem('etsy_calendar')||'{}');
+
+  // Шаблонные задачи для магазина
+  const templates = [
+    { day: 1,  type: 'listing', text: 'Обновить теги у 5 листингов с низкими просмотрами' },
+    { day: 3,  type: 'content', text: 'Запинить 3 листинга в Pinterest' },
+    { day: 5,  type: 'listing', text: 'Добавить новый листинг' },
+    { day: 7,  type: 'review',  text: 'Проверить и ответить на все отзывы' },
+    { day: 10, type: 'content', text: 'Пост в Instagram/Facebook' },
+    { day: 12, type: 'listing', text: 'Обновить главное фото у 3 листингов' },
+    { day: 14, type: 'review',  text: 'Анализ статистики — что сработало за 2 недели' },
+    { day: 17, type: 'listing', text: 'Добавить новый листинг' },
+    { day: 20, type: 'content', text: 'Запинить 3 листинга в Pinterest' },
+    { day: 22, type: 'ads',     text: 'Проверить эффективность Etsy Ads' },
+    { day: 25, type: 'listing', text: 'Обновить описания у 3 листингов' },
+    { day: 28, type: 'review',  text: 'Месячный обзор: продажи, конверсия, планы' },
+  ];
+
+  const typeColors = {
+    listing: { bg: 'rgba(91,156,246,.15)', text: 'var(--blue)',   label: '🛍 Листинг' },
+    content: { bg: 'rgba(167,139,250,.15)', text: 'var(--purple)', label: '📱 Контент' },
+    review:  { bg: 'rgba(61,214,140,.15)', text: 'var(--green)',  label: '⭐ Анализ' },
+    ads:     { bg: 'rgba(244,98,42,.15)',  text: 'var(--accent)', label: '📣 Реклама' },
+    custom:  { bg: 'rgba(255,179,71,.15)', text: 'var(--accent2)', label: '✏️ Задача' },
+  };
+
+  // Собрать дни месяца
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const today = now.getDate();
+
+  // Все задачи = шаблонные + пользовательские
+  const allTasks = {};
+  templates.forEach(t => {
+    const key = `${year}-${month}-${t.day}`;
+    if (!allTasks[t.day]) allTasks[t.day] = [];
+    const done = saved[key+'_'+t.text] || false;
+    allTasks[t.day].push({ ...t, done, key: key+'_'+t.text });
+  });
+  // Пользовательские задачи
+  Object.entries(saved).forEach(([k, v]) => {
+    if (k.startsWith(`custom_${year}_${month}_`) && typeof v === 'object') {
+      const day = parseInt(k.split('_')[3]);
+      if (!allTasks[day]) allTasks[day] = [];
+      allTasks[day].push({ day, type: 'custom', text: v.text, done: v.done, key: k, custom: true });
+    }
+  });
+
+  const weekDays = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+
+  let calHtml = `
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px">
+    ${weekDays.map(d=>`<div style="text-align:center;font-size:11px;color:var(--muted);font-weight:700;padding:4px">${d}</div>`).join('')}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+    ${Array(firstDay).fill(0).map(()=>'<div></div>').join('')}
+    ${Array.from({length:daysInMonth},(_,i)=>{
+      const d = i+1;
+      const isToday = d === today;
+      const tasks = allTasks[d] || [];
+      const doneCnt = tasks.filter(t=>t.done).length;
+      return `
+      <div style="background:${isToday?'rgba(244,98,42,.12)':tasks.length?'rgba(255,255,255,.04)':'transparent'};
+        border:1px solid ${isToday?'var(--accent)':'var(--border)'};
+        border-radius:8px;padding:6px;min-height:70px;cursor:pointer"
+        onclick="calDayClick(${d})" id="cal-day-${d}">
+        <div style="font-size:12px;font-weight:${isToday?800:500};color:${isToday?'var(--accent)':'var(--text)'};margin-bottom:4px">
+          ${d}${isToday?' ←':''}
+        </div>
+        ${tasks.slice(0,2).map(t=>`
+          <div style="font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;
+            background:${typeColors[t.type]?.bg||typeColors.custom.bg};
+            color:${typeColors[t.type]?.text||typeColors.custom.text};
+            ${t.done?'opacity:.4;text-decoration:line-through':''}">
+            ${clip(t.text,18)}
+          </div>
+        `).join('')}
+        ${tasks.length>2?`<div style="font-size:10px;color:var(--muted)">+${tasks.length-2} ещё</div>`:''}
+        ${tasks.length>0&&doneCnt>0?`<div style="font-size:10px;color:var(--green);margin-top:2px">✓${doneCnt}/${tasks.length}</div>`:''}
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  el.innerHTML = `
+  <div class="section">
+    <div class="section-hd">
+      <h3>📅 Календарь контента — ${monthNames[month]} ${year}</h3>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+      ${Object.entries(typeColors).map(([k,v])=>`
+        <span style="font-size:12px;background:${v.bg};color:${v.text};padding:4px 10px;border-radius:99px">${v.label}</span>
+      `).join('')}
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn" style="background:var(--dim);color:var(--text);padding:6px 12px;font-size:12px" onclick="calPrevMonth()">← Пред.</button>
+        <button class="btn" style="background:var(--dim);color:var(--text);padding:6px 12px;font-size:12px" onclick="calNextMonth()">След. →</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">${calHtml}</div>
+
+    <div id="cal-day-detail" style="display:none"></div>
+
+    <div class="card">
+      <div class="section-hd"><h3>➕ Добавить задачу</h3></div>
+      <div style="display:grid;grid-template-columns:80px 1fr 120px auto;gap:10px;align-items:end">
+        <div>
+          <label>День</label>
+          <input type="number" id="cal-new-day" min="1" max="${daysInMonth}" value="${today}" style="width:100%">
+        </div>
+        <div>
+          <label>Задача</label>
+          <input type="text" id="cal-new-text" placeholder="Добавить новые листинги...">
+        </div>
+        <div>
+          <label>Тип</label>
+          <select id="cal-new-type" style="width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:13px;color:var(--text);outline:none">
+            <option value="listing">🛍 Листинг</option>
+            <option value="content">📱 Контент</option>
+            <option value="ads">📣 Реклама</option>
+            <option value="review">⭐ Анализ</option>
+            <option value="custom">✏️ Другое</option>
+          </select>
+        </div>
+        <div>
+          <label style="opacity:0">.</label>
+          <button class="btn" style="background:var(--accent);color:#fff;padding:10px 16px;width:100%" onclick="calAddTask()">+ Добавить</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  window._calYear = year;
+  window._calMonth = month;
+}
+
+function calDayClick(day) {
+  const saved = JSON.parse(localStorage.getItem('etsy_calendar')||'{}');
+  const year = window._calYear, month = window._calMonth;
+  const templates = [
+    { day:1, type:'listing', text:'Обновить теги у 5 листингов с низкими просмотрами' },
+    { day:3, type:'content', text:'Запинить 3 листинга в Pinterest' },
+    { day:5, type:'listing', text:'Добавить новый листинг' },
+    { day:7, type:'review',  text:'Проверить и ответить на все отзывы' },
+    { day:10,type:'content', text:'Пост в Instagram/Facebook' },
+    { day:12,type:'listing', text:'Обновить главное фото у 3 листингов' },
+    { day:14,type:'review',  text:'Анализ статистики — что сработало за 2 недели' },
+    { day:17,type:'listing', text:'Добавить новый листинг' },
+    { day:20,type:'content', text:'Запинить 3 листинга в Pinterest' },
+    { day:22,type:'ads',     text:'Проверить эффективность Etsy Ads' },
+    { day:25,type:'listing', text:'Обновить описания у 3 листингов' },
+    { day:28,type:'review',  text:'Месячный обзор: продажи, конверсия, планы' },
+  ];
+  const typeColors = {
+    listing:{ bg:'rgba(91,156,246,.15)',text:'var(--blue)',   label:'🛍 Листинг'},
+    content:{ bg:'rgba(167,139,250,.15)',text:'var(--purple)',label:'📱 Контент'},
+    review: { bg:'rgba(61,214,140,.15)', text:'var(--green)', label:'⭐ Анализ'},
+    ads:    { bg:'rgba(244,98,42,.15)',  text:'var(--accent)',label:'📣 Реклама'},
+    custom: { bg:'rgba(255,179,71,.15)', text:'var(--accent2)',label:'✏️ Задача'},
+  };
+  const tasks = [];
+  templates.filter(t=>t.day===day).forEach(t=>{
+    const key = `${year}-${month}-${day}_${t.text}`;
+    tasks.push({...t, done: saved[key]||false, key});
+  });
+  Object.entries(saved).forEach(([k,v])=>{
+    if (k.startsWith(`custom_${year}_${month}_${day}_`) && typeof v==='object')
+      tasks.push({day, type:'custom', text:v.text, done:v.done, key:k, custom:true});
+  });
+  if (!tasks.length) { document.getElementById('cal-day-detail').style.display='none'; return; }
+  const det = document.getElementById('cal-day-detail');
+  det.style.display = 'block';
+  det.innerHTML = `<div class="card" style="border-color:var(--accent)">
+    <div style="font-size:14px;font-weight:700;margin-bottom:14px">📅 ${day} — задачи</div>
+    ${tasks.map(t=>`
+      <div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--dim)">
+        <input type="checkbox" ${t.done?'checked':''} onchange="calToggle('${t.key}',this.checked,${t.custom||false},'${(t.text||'').replace(/'/g,"\\'")}',${day})"
+          style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);flex-shrink:0">
+        <span style="font-size:13px;${t.done?'text-decoration:line-through;color:var(--muted)':''}
+          ;color:${typeColors[t.type]?.text||'var(--text)'}">${typeColors[t.type]?.label||''} ${t.text}</span>
+        ${t.custom?`<button class="btn" style="margin-left:auto;background:rgba(248,113,113,.1);color:var(--red);padding:3px 8px;font-size:11px" onclick="calDeleteTask('${t.key}',${day})">✕</button>`:''}
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+function calToggle(key, val, isCustom, text, day) {
+  const saved = JSON.parse(localStorage.getItem('etsy_calendar')||'{}');
+  if (isCustom) { if(saved[key]) saved[key].done = val; }
+  else saved[key] = val;
+  localStorage.setItem('etsy_calendar', JSON.stringify(saved));
+  calDayClick(day);
+  renderCalendar();
+}
+
+function calAddTask() {
+  const day  = parseInt(document.getElementById('cal-new-day').value);
+  const text = document.getElementById('cal-new-text').value.trim();
+  const type = document.getElementById('cal-new-type').value;
+  if (!text) { alert('Введи текст задачи'); return; }
+  const year = window._calYear, month = window._calMonth;
+  const saved = JSON.parse(localStorage.getItem('etsy_calendar')||'{}');
+  const key = `custom_${year}_${month}_${day}_${Date.now()}`;
+  saved[key] = { text, type, done: false };
+  localStorage.setItem('etsy_calendar', JSON.stringify(saved));
+  document.getElementById('cal-new-text').value = '';
+  renderCalendar();
+}
+
+function calDeleteTask(key, day) {
+  const saved = JSON.parse(localStorage.getItem('etsy_calendar')||'{}');
+  delete saved[key];
+  localStorage.setItem('etsy_calendar', JSON.stringify(saved));
+  renderCalendar();
+}
+
+function calPrevMonth() {
+  const d = new Date(window._calYear, window._calMonth - 1, 1);
+  window._calYear = d.getFullYear(); window._calMonth = d.getMonth();
+  renderCalendar();
+}
+function calNextMonth() {
+  const d = new Date(window._calYear, window._calMonth + 1, 1);
+  window._calYear = d.getFullYear(); window._calMonth = d.getMonth();
+  renderCalendar();
+}
+
+// ────────────────────────────────────────
+//  🔍 ПУТЬ ПОКУПАТЕЛЯ
+// ────────────────────────────────────────
+function renderJourney() {
+  const el = document.getElementById('panel-journey');
+  const allMarket = Object.values(S.markets).flat();
+  const kws = Object.keys(S.markets);
+
+  const avgViews = allMarket.length
+    ? allMarket.reduce((s,l)=>s+(l.views||0),0)/allMarket.length : 0;
+  const avgFavs = allMarket.length
+    ? allMarket.reduce((s,l)=>s+(l.num_favorers||0),0)/allMarket.length : 0;
+  const avgConvMkt = allMarket.filter(l=>l.views>50).length
+    ? allMarket.filter(l=>l.views>50).reduce((s,l)=>s+convOf(l),0)/allMarket.filter(l=>l.views>50).length : 2;
+
+  // Факторы влияющие на каждый этап
+  const stages = [
+    {
+      n: '1', icon: '🔍', title: 'Поиск', sub: 'Покупатель вводит запрос в Etsy',
+      color: 'var(--blue)',
+      factors: [
+        { name: 'Ключевые слова в заголовке', impact: 95, tip: 'Первые 3 слова самые важные — именно они индексируются в первую очередь' },
+        { name: 'Теги (все 13)', impact: 85, tip: 'Каждый тег = отдельный шанс попасть в поиск по другому запросу' },
+        { name: 'История продаж магазина', impact: 70, tip: 'Etsy продвигает листинги магазинов с продажами выше чем новые' },
+        { name: 'Актуальность листинга', impact: 60, tip: 'Недавно обновлённые листинги получают временный буст' },
+      ]
+    },
+    {
+      n: '2', icon: '👁', title: 'Первый взгляд', sub: 'Покупатель видит листинг в поиске',
+      color: 'var(--purple)',
+      factors: [
+        { name: 'Главное фото (CTR)', impact: 90, tip: 'Это единственное что видно в поиске — от него зависит кликают ли вообще' },
+        { name: 'Цена', impact: 75, tip: 'Покупатель сравнивает цены прямо в поиске — будь в рыночном диапазоне' },
+        { name: 'Количество продаж/отзывов', impact: 65, tip: 'Показывается рядом с листингом — социальное доказательство' },
+        { name: 'Star Seller значок', impact: 50, tip: 'Повышает доверие и CTR примерно на 15-20%' },
+      ]
+    },
+    {
+      n: '3', icon: '📄', title: 'Страница листинга', sub: 'Покупатель изучает товар',
+      color: 'var(--accent2)',
+      factors: [
+        { name: 'Все фотографии (7-10 штук)', impact: 88, tip: 'Каждое доп. фото снижает сомнения — mockup, детали, пример использования' },
+        { name: 'Первые 160 символов описания', impact: 80, tip: 'Это то что видно без нажатия «читать далее» — должно цеплять' },
+        { name: 'Видео листинга', impact: 72, tip: 'Видео увеличивает конверсию на 20-30% — покупатель видит товар в действии' },
+        { name: 'Отзывы с фото', impact: 85, tip: 'Отзывы с фото — самый сильный сигнал доверия на Etsy' },
+        { name: 'Цена + чёткое описание что получат', impact: 78, tip: 'Покупатель должен точно понимать что он скачает — размер, страниц, формат' },
+      ]
+    },
+    {
+      n: '4', icon: '❤️', title: 'Решение', sub: 'Добавляет в избранное или покупает',
+      color: 'var(--green)',
+      factors: [
+        { name: 'Ясность ценности (что получу)', impact: 92, tip: 'Опиши конкретно: «13 страниц, US Letter, мгновенное скачивание»' },
+        { name: 'Политика возврата', impact: 55, tip: 'Для цифровых: «No refunds» — но объясни почему, это снижает тревогу' },
+        { name: 'Время ответа продавца', impact: 45, tip: 'Быстрый ответ на вопросы = выше доверие = выше конверсия' },
+        { name: 'Сравнение с ценой аналогов', impact: 65, tip: 'Если у конкурентов дороже — упомяни это в описании ненавязчиво' },
+      ]
+    },
+    {
+      n: '5', icon: '🔄', title: 'Повторная покупка', sub: 'Возвращается за новыми товарами',
+      color: 'var(--accent)',
+      factors: [
+        { name: 'Качество первой покупки', impact: 95, tip: 'Товар должен точно соответствовать ожиданиям из фото и описания' },
+        { name: 'Благодарственное сообщение', impact: 60, tip: 'Настрой автоматическое «спасибо» с предложением посмотреть другие товары' },
+        { name: 'Коллекции в магазине', impact: 50, tip: 'Объединяй похожие товары в коллекции — покупатели их просматривают' },
+        { name: 'Регулярные новые товары', impact: 70, tip: 'Покупатели подписываются на магазин — новые товары им показываются' },
+      ]
+    },
+  ];
+
+  el.innerHTML = `
+  <div class="section">
+    <div class="section-hd"><h3>🔍 Путь покупателя на Etsy — 5 этапов</h3></div>
+
+    <div class="card-grid card-grid-3" style="margin-bottom:16px">
+      ${miniMetric(Math.round(avgViews), 'Ср. просмотров у конкурентов')}
+      ${miniMetric(Math.round(avgFavs), 'Ср. избранных')}
+      ${miniMetric(avgConvMkt.toFixed(1)+'%', 'Ср. конверсия рынка')}
+    </div>
+
+    <div style="display:flex;align-items:center;gap:0;margin-bottom:20px;overflow-x:auto;padding-bottom:8px">
+      ${stages.map((s,i) => `
+        <div style="display:flex;align-items:center;gap:0;flex-shrink:0">
+          <div style="background:${s.color};color:#fff;border-radius:10px;padding:10px 14px;text-align:center;min-width:90px">
+            <div style="font-size:18px">${s.icon}</div>
+            <div style="font-size:11px;font-weight:700;margin-top:3px">${s.title}</div>
+          </div>
+          ${i<stages.length-1?`<div style="color:var(--muted);font-size:18px;padding:0 6px">→</div>`:''}
+        </div>
+      `).join('')}
+    </div>
+
+    ${stages.map(s => `
+    <div class="card" style="margin-bottom:12px;border-left:3px solid ${s.color}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <span style="font-size:20px">${s.icon}</span>
+        <div>
+          <div style="font-size:14px;font-weight:700">Этап ${s.n}: ${s.title}</div>
+          <div style="font-size:12px;color:var(--muted)">${s.sub}</div>
+        </div>
+      </div>
+      ${s.factors.map(f => `
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+            <span style="font-weight:600">${f.name}</span>
+            <span style="color:${f.impact>=80?'var(--green)':f.impact>=60?'var(--accent2)':'var(--muted)'}">
+              Влияние ${f.impact}%
+            </span>
+          </div>
+          <div class="bar-track" style="margin-bottom:4px">
+            <div class="bar-fill" style="width:${f.impact}%;
+              background:${f.impact>=80?s.color:f.impact>=60?'var(--accent2)':'var(--muted)'}">
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--muted)">💡 ${f.tip}</div>
+        </div>
+      `).join('')}
+    </div>
+    `).join('')}
+  </div>
+
+  <div class="section">
+    <div class="section-hd"><h3>⚡ Самые важные точки роста</h3></div>
+    <div class="card">
+      ${[
+        { prio:'🔴 Критично', text:'Главное фото — самый большой рычаг роста. Тестируй разные варианты каждые 2-4 недели.', color:'var(--red)' },
+        { prio:'🟡 Важно', text:'Все 13 тегов в каждом листинге — бесплатно и сразу расширяет охват поиска.', color:'var(--accent2)' },
+        { prio:'🟡 Важно', text:'Отзывы с фото — после каждой продажи вежливо попроси оставить отзыв с фото результата.', color:'var(--accent2)' },
+        { prio:'🟢 Рекомендую', text:'Видео к листингам — даже 15 секунд на телефон даёт приоритет в поиске Etsy.', color:'var(--green)' },
+        { prio:'🟢 Рекомендую', text:'Благодарственное сообщение с предложением посмотреть другие товары — настрой один раз.', color:'var(--green)' },
+      ].map(r=>`
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--dim)">
+          <span style="color:${r.color};font-weight:700;white-space:nowrap;font-size:13px">${r.prio}</span>
+          <span style="font-size:13px;color:var(--muted)">${r.text}</span>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+// ────────────────────────────────────────
+//  💰 ТРЕКЕР ДОХОДА
+// ────────────────────────────────────────
+function renderIncome() {
+  const el = document.getElementById('panel-income');
+  const saved = JSON.parse(localStorage.getItem('etsy_income')||'{}');
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const monthNames = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+
+  // Все записи отсортированные
+  const entries = Object.entries(saved)
+    .filter(([k]) => k.startsWith('sale_'))
+    .map(([k,v]) => v)
+    .sort((a,b) => new Date(a.date) - new Date(b.date));
+
+  // Группировка по месяцам
+  const byMonth = {};
+  entries.forEach(e => {
+    const d = new Date(e.date);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    if (!byMonth[key]) byMonth[key] = { revenue:0, net:0, sales:0, year:d.getFullYear(), month:d.getMonth() };
+    byMonth[key].revenue += parseFloat(e.price)||0;
+    byMonth[key].net += parseFloat(e.net)||0;
+    byMonth[key].sales += parseInt(e.qty)||1;
+  });
+
+  const monthKeys = Object.keys(byMonth).sort();
+  const maxRevenue = Math.max(...Object.values(byMonth).map(m=>m.revenue), 1);
+
+  // Текущий месяц
+  const curKey = `${currentYear}-${currentMonth}`;
+  const curMonth = byMonth[curKey] || { revenue:0, net:0, sales:0 };
+
+  // Цель
+  const goal = parseFloat(saved.monthly_goal)||500;
+
+  el.innerHTML = `
+  <div class="section">
+    <div class="section-hd"><h3>💰 Трекер дохода Etsy</h3></div>
+
+    <div class="card-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+      ${miniMetric('$'+curMonth.revenue.toFixed(2), monthNames[currentMonth]+' — выручка')}
+      ${miniMetric('$'+curMonth.net.toFixed(2), 'Чистая прибыль')}
+      ${miniMetric(curMonth.sales, 'Продаж в этом месяце')}
+      ${miniMetric(goal>0?Math.round(curMonth.revenue/goal*100)+'%':'—', 'Выполнение цели')}
+    </div>
+
+    ${goal>0?`
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+        <span>Прогресс к цели $${goal}/мес</span>
+        <span style="color:${curMonth.revenue>=goal?'var(--green)':'var(--accent2)'}">
+          $${curMonth.revenue.toFixed(2)} / $${goal}
+        </span>
+      </div>
+      <div class="bar-track" style="height:12px">
+        <div class="bar-fill" style="width:${Math.min(curMonth.revenue/goal*100,100)}%;
+          background:${curMonth.revenue>=goal?'var(--green)':'var(--accent)'};height:100%"></div>
+      </div>
+      ${curMonth.revenue>=goal
+        ? '<div style="margin-top:8px;font-size:12px;color:var(--green)">🎉 Цель выполнена!</div>'
+        : `<div style="margin-top:8px;font-size:12px;color:var(--muted)">Осталось: $${(goal-curMonth.revenue).toFixed(2)}</div>`}
+    </div>`:''}
+
+    <div class="card-grid card-grid-2" style="margin-bottom:16px">
+      <div class="card">
+        <div class="section-hd"><h3>➕ Добавить продажу</h3></div>
+        <div style="display:grid;gap:10px">
+          <div>
+            <label>Дата</label>
+            <input type="date" id="inc-date" value="${now.toISOString().split('T')[0]}">
+          </div>
+          <div>
+            <label>Название товара</label>
+            <input type="text" id="inc-title" placeholder="Bible Study Printable Pack">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label>Цена продажи ($)</label>
+              <input type="number" id="inc-price" value="4.99" step="0.01">
+            </div>
+            <div>
+              <label>Количество</label>
+              <input type="number" id="inc-qty" value="1" min="1">
+            </div>
+          </div>
+          <button class="btn" style="background:var(--accent);color:#fff;padding:10px" onclick="incAdd()">+ Добавить продажу</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-hd"><h3>🎯 Месячная цель</h3></div>
+        <div style="margin-bottom:10px">
+          <label>Цель дохода в месяц ($)</label>
+          <input type="number" id="inc-goal" value="${goal}" step="10">
+        </div>
+        <button class="btn" style="background:var(--dim);color:var(--text);padding:10px;width:100%" onclick="incSetGoal()">Сохранить цель</button>
+        <div style="margin-top:14px;font-size:12px;color:var(--muted);line-height:1.7">
+          <strong style="color:var(--text)">Комиссии Etsy вычитаются автоматически:</strong><br>
+          6.5% транзакция + 3% + $0.25 платёж = ~10% от цены
+        </div>
+      </div>
+    </div>
+
+    ${monthKeys.length ? `
+    <div class="section">
+      <div class="section-hd"><h3>📊 График дохода по месяцам</h3></div>
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;align-items:flex-end;gap:8px;height:140px;margin-bottom:8px">
+          ${monthKeys.map(k => {
+            const m = byMonth[k];
+            const h = Math.round(m.revenue/maxRevenue*130);
+            const hn = Math.round(m.net/maxRevenue*130);
+            const isCur = k === curKey;
+            return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:28px">
+              <div style="font-size:10px;color:var(--muted)">$${m.revenue.toFixed(0)}</div>
+              <div style="width:100%;display:flex;gap:2px;align-items:flex-end">
+                <div style="flex:1;height:${h}px;background:${isCur?'var(--accent)':'var(--blue)'};opacity:.8;border-radius:3px 3px 0 0" title="Выручка: $${m.revenue.toFixed(2)}"></div>
+                <div style="flex:1;height:${hn}px;background:${isCur?'var(--accent2)':'var(--green)'};opacity:.8;border-radius:3px 3px 0 0" title="Чистая: $${m.net.toFixed(2)}"></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          ${monthKeys.map(k=>{
+            const m=byMonth[k];
+            return `<div style="flex:1;text-align:center;font-size:10px;color:var(--muted)">${monthNames[m.month]}<br>${m.year}</div>`;
+          }).join('')}
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--muted)">
+          <span style="color:var(--blue)">■</span> Выручка &nbsp;
+          <span style="color:var(--green)">■</span> Чистая прибыль (после комиссий Etsy)
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-hd"><h3>📋 История продаж</h3></div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Дата</th><th>Товар</th><th>Кол-во</th><th>Выручка</th><th>Чистая</th><th></th></tr></thead>
+            <tbody>
+              ${entries.slice().reverse().slice(0,30).map(e=>`<tr>
+                <td style="color:var(--muted);white-space:nowrap">${e.date}</td>
+                <td>${clip(e.title||'—',35)}</td>
+                <td>${e.qty||1}</td>
+                <td style="color:var(--accent2);font-weight:600">$${parseFloat(e.price||0).toFixed(2)}</td>
+                <td style="color:var(--green);font-weight:600">$${parseFloat(e.net||0).toFixed(2)}</td>
+                <td><button class="btn" style="background:rgba(248,113,113,.1);color:var(--red);padding:2px 7px;font-size:11px" onclick="incDelete('${e.id}')">✕</button></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <button class="btn" style="background:rgba(61,214,140,.15);color:var(--green);padding:8px 14px;font-size:12px" onclick="incExport()">📥 Экспорт CSV</button>
+          <button class="btn" style="background:rgba(248,113,113,.1);color:var(--red);padding:8px 14px;font-size:12px" onclick="incClear()">🗑 Очистить все</button>
+        </div>
+      </div>
+    </div>
+    ` : '<div class="card"><div class="empty">Нет данных о продажах. Добавь первую продажу выше.</div></div>'}
+  </div>`;
+}
+
+function incAdd() {
+  const date  = document.getElementById('inc-date').value;
+  const title = document.getElementById('inc-title').value.trim() || 'Продажа';
+  const price = parseFloat(document.getElementById('inc-price').value)||0;
+  const qty   = parseInt(document.getElementById('inc-qty').value)||1;
+  if (!date||!price) { alert('Заполни дату и цену'); return; }
+  const net   = (price - price*0.065 - price*0.03 - 0.25) * qty;
+  const saved = JSON.parse(localStorage.getItem('etsy_income')||'{}');
+  const id    = 'sale_'+Date.now();
+  saved[id]   = { id, date, title, price: price*qty, net: Math.max(net,0), qty };
+  localStorage.setItem('etsy_income', JSON.stringify(saved));
+  renderIncome();
+}
+
+function incSetGoal() {
+  const goal = parseFloat(document.getElementById('inc-goal').value)||500;
+  const saved = JSON.parse(localStorage.getItem('etsy_income')||'{}');
+  saved.monthly_goal = goal;
+  localStorage.setItem('etsy_income', JSON.stringify(saved));
+  renderIncome();
+}
+
+function incDelete(id) {
+  const saved = JSON.parse(localStorage.getItem('etsy_income')||'{}');
+  delete saved[id];
+  localStorage.setItem('etsy_income', JSON.stringify(saved));
+  renderIncome();
+}
+
+function incClear() {
+  if (!confirm('Удалить все записи о продажах?')) return;
+  const saved = JSON.parse(localStorage.getItem('etsy_income')||'{}');
+  Object.keys(saved).filter(k=>k.startsWith('sale_')).forEach(k=>delete saved[k]);
+  localStorage.setItem('etsy_income', JSON.stringify(saved));
+  renderIncome();
+}
+
+function incExport() {
+  const saved = JSON.parse(localStorage.getItem('etsy_income')||'{}');
+  const entries = Object.entries(saved).filter(([k])=>k.startsWith('sale_')).map(([,v])=>v)
+    .sort((a,b)=>new Date(a.date)-new Date(b.date));
+  if (!entries.length) { alert('Нет данных для экспорта'); return; }
+  const rows = [['Дата','Товар','Кол-во','Выручка','Чистая прибыль']];
+  entries.forEach(e => rows.push([e.date, e.title||'—', e.qty||1, parseFloat(e.price||0).toFixed(2), parseFloat(e.net||0).toFixed(2)]));
+  downloadFile('etsy_income.csv', rows.map(r=>r.join(',')).join('\n'), 'text/csv');
+}
+
+// ────────────────────────────────────────
+//  PWA — УСТАНОВКА НА ГЛАВНЫЙ ЭКРАН
+// ────────────────────────────────────────
+let _pwaPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _pwaPrompt = e;
+  const btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = 'flex';
+});
+
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = 'none';
+  _pwaPrompt = null;
+});
+
+async function pwaInstall() {
+  if (_pwaPrompt) {
+    _pwaPrompt.prompt();
+    const { outcome } = await _pwaPrompt.userChoice;
+    if (outcome === 'accepted') {
+      document.getElementById('pwa-install-btn').style.display = 'none';
+    }
+    _pwaPrompt = null;
+  } else {
+    // Показать инструкцию для iOS (Safari не поддерживает beforeinstallprompt)
+    alert('Чтобы установить на iPhone:\n1. Нажми кнопку «Поделиться» (квадрат со стрелкой вверх)\n2. Выбери «На экран «Домой»»\n3. Нажми «Добавить»\n\nДля Android Chrome:\nМеню (три точки) → «Добавить на главный экран»');
+  }
+}
+
+refreshEtsyStatus();
+
+// Регистрация Service Worker для работы офлайн
+if ('serviceWorker' in navigator) {
+  const swCode = `
+const CACHE = 'etsy-analyzer-v1';
+const URLS  = [self.location.href.replace(/\\/[^/]*$/, '/') || '/'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(URLS)).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(clients.claim());
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request).catch(() =>
+      caches.match(e.request)
+    ))
+  );
+});
+  `;
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+</script>
+</body>
+</html>
